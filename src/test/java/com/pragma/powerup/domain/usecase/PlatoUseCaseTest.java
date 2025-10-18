@@ -272,4 +272,169 @@ class PlatoUseCaseTest {
         assertEquals("", resultado.getCategoria());
         verify(platoPersistencePort).guardarPlato(plato);
     }
+
+    @Test
+    void actualizarPlato_cuandoPlatoEsValido_debeActualizarPlato() {
+        Plato platoEsperado = new Plato();
+        platoEsperado.setId(1L);
+        platoEsperado.setNombre("Hamburguesa");
+        platoEsperado.setDescripcion("Nueva descripción actualizada");
+        platoEsperado.setPrecio(18000);
+        platoEsperado.setUrlImagen("https://example.com/hamburguesa.jpg");
+        platoEsperado.setCategoria("Comida rapida");
+        platoEsperado.setActivo(true);
+        platoEsperado.setIdRestaurante(1L);
+
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenReturn(platoEsperado);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
+
+        assertNotNull(resultado);
+        assertEquals(platoEsperado.getId(), resultado.getId());
+        assertEquals(platoEsperado.getNombre(), resultado.getNombre());
+        assertEquals(platoEsperado.getDescripcion(), resultado.getDescripcion());
+        assertEquals(platoEsperado.getPrecio(), resultado.getPrecio());
+        assertEquals(platoEsperado.getUrlImagen(), resultado.getUrlImagen());
+        assertEquals(platoEsperado.getCategoria(), resultado.getCategoria());
+        assertEquals(platoEsperado.getActivo(), resultado.getActivo());
+        assertEquals(platoEsperado.getIdRestaurante(), resultado.getIdRestaurante());
+
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, 15000, "Deliciosa hamburguesa con carne");
+    }
+
+    @Test
+    void actualizarPlato_cuandoPlatoTienePrecioNull_debeActualizarPlato() {
+        plato.setPrecio(null);
+        Plato platoEsperado = new Plato();
+        platoEsperado.setId(1L);
+        platoEsperado.setPrecio(null);
+
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), any(), anyString()))
+                .thenReturn(platoEsperado);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
+
+        assertNotNull(resultado);
+        assertNull(resultado.getPrecio());
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, null, "Deliciosa hamburguesa con carne");
+    }
+
+    @Test
+    void actualizarPlato_cuandoPlatoTieneDescripcionNull_debeActualizarPlato() {
+        plato.setDescripcion(null);
+        Plato platoEsperado = new Plato();
+        platoEsperado.setId(1L);
+        platoEsperado.setDescripcion(null);
+
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), any()))
+                .thenReturn(platoEsperado);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
+
+        assertNotNull(resultado);
+        assertNull(resultado.getDescripcion());
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, 15000, null);
+    }
+
+    @Test
+    void actualizarPlato_cuandoPlatoTienePrecioCero_debeActualizarPlato() {
+        plato.setPrecio(0);
+        Plato platoEsperado = new Plato();
+        platoEsperado.setId(1L);
+        platoEsperado.setPrecio(0);
+
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenReturn(platoEsperado);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
+
+        assertNotNull(resultado);
+        assertEquals(0, resultado.getPrecio());
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, 0, "Deliciosa hamburguesa con carne");
+    }
+
+    @Test
+    void actualizarPlato_cuandoPlatoTienePrecioNegativo_debeActualizarPlato() {
+        plato.setPrecio(-1000);
+        Plato platoEsperado = new Plato();
+        platoEsperado.setId(1L);
+        platoEsperado.setPrecio(-1000);
+
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenReturn(platoEsperado);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
+
+        assertNotNull(resultado);
+        assertEquals(-1000, resultado.getPrecio());
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, -1000, "Deliciosa hamburguesa con carne");
+    }
+
+    @Test
+    void actualizarPlato_cuandoPlatoTieneDescripcionVacia_debeActualizarPlato() {
+        plato.setDescripcion("");
+        Plato platoEsperado = new Plato();
+        platoEsperado.setId(1L);
+        platoEsperado.setDescripcion("");
+
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenReturn(platoEsperado);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
+
+        assertNotNull(resultado);
+        assertEquals("", resultado.getDescripcion());
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, 15000, "");
+    }
+
+    @Test
+    void actualizarPlato_cuandoPersistenceLanzaExcepcion_debePropagarla() {
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenThrow(new RuntimeException("Error en base de datos"));
+
+        assertThrows(RuntimeException.class, 
+                () -> platoUseCase.actualizarPlato(plato));
+
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, 15000, "Deliciosa hamburguesa con carne");
+    }
+
+    @Test
+    void actualizarPlato_cuandoPlatoTieneIdDiferente_debeActualizarConIdCorrecto() {
+        plato.setId(5L);
+        Plato platoEsperado = new Plato();
+        platoEsperado.setId(5L);
+        platoEsperado.setPrecio(15000);
+        platoEsperado.setDescripcion("Deliciosa hamburguesa con carne");
+
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenReturn(platoEsperado);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
+
+        assertNotNull(resultado);
+        assertEquals(5L, resultado.getId());
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(5L, 15000, "Deliciosa hamburguesa con carne");
+    }
+
+    @Test
+    void actualizarPlato_cuandoPlatoTienePrecioYDescripcionActualizados_debeActualizarCorrectamente() {
+        plato.setPrecio(20000);
+        plato.setDescripcion("Hamburguesa premium con ingredientes especiales");
+        
+        Plato platoEsperado = new Plato();
+        platoEsperado.setId(1L);
+        platoEsperado.setPrecio(20000);
+        platoEsperado.setDescripcion("Hamburguesa premium con ingredientes especiales");
+
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenReturn(platoEsperado);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
+
+        assertNotNull(resultado);
+        assertEquals(20000, resultado.getPrecio());
+        assertEquals("Hamburguesa premium con ingredientes especiales", resultado.getDescripcion());
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, 20000, "Hamburguesa premium con ingredientes especiales");
+    }
 }

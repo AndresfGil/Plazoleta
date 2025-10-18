@@ -28,7 +28,7 @@ public class RestauranteUseCase implements IRestauranteServicePort {
         try {
             UsuarioResponseDto usuario = usuarioServicePort.obtenerUsuarioPorId(idPropietario);
             
-            if (!usuario.getActivo()) {
+            if (usuario.getActivo().equals(false)) {
                 throw new DomainException("El usuario propietario no está activo");
             }
             

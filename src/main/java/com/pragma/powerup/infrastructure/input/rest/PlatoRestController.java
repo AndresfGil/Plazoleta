@@ -1,6 +1,7 @@
 package com.pragma.powerup.infrastructure.input.rest;
 
 import com.pragma.powerup.application.dto.request.PlatoRequestDto;
+import com.pragma.powerup.application.dto.request.PlatoUpdateRequestDto;
 import com.pragma.powerup.application.dto.response.PlatoResponseDto;
 import com.pragma.powerup.application.handler.IPlazoletaHandler;
 import io.swagger.v3.oas.annotations.Operation;
@@ -97,5 +98,90 @@ public class PlatoRestController {
             @Valid @RequestBody PlatoRequestDto platoRequestDto) {
         PlatoResponseDto platoResponse = plazoletaHandler.guardarPlato(platoRequestDto);
         return new ResponseEntity<>(platoResponse, HttpStatus.CREATED);
+    }
+
+    @Operation(
+            summary = "Actualizar parcialmente un plato",
+            description = "Actualiza solo el precio y descripción de un plato existente. Solo se pueden modificar estos dos campos específicos."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Plato actualizado exitosamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PlatoResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "Plato actualizado",
+                                    value = "{\n" +
+                                            "  \"id\": 1,\n" +
+                                            "  \"nombre\": \"Hamburguesa Clásica\",\n" +
+                                            "  \"descripcion\": \"Hamburguesa con doble carne, lechuga, tomate y queso cheddar\",\n" +
+                                            "  \"precio\": 18000,\n" +
+                                            "  \"urlImagen\": \"https://example.com/hamburguesa.jpg\",\n" +
+                                            "  \"categoria\": \"Hamburguesas\",\n" +
+                                            "  \"activo\": true\n" +
+                                            "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Datos inválidos",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Object.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Campo obligatorio faltante",
+                                            value = "{\"message\": \"La descripción es obligatoria\"}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Precio inválido",
+                                            value = "{\"message\": \"El precio debe ser un número positivo\"}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Plato no encontrado",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Object.class),
+                            examples = @ExampleObject(value = "{\"message\": \"Plato no encontrado con ID: 999\"}")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500", 
+                    description = "Error interno del servidor",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Object.class),
+                            examples = @ExampleObject(value = "{\"message\": \"Ha ocurrido un error interno en el servidor\"}")
+                    )
+            )
+    })
+    @PatchMapping("/{id}")
+    public ResponseEntity<PlatoResponseDto> actualizarPlato(
+            @PathVariable Long id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Datos del plato a actualizar (solo precio y descripción)",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PlatoUpdateRequestDto.class),
+                            examples = @ExampleObject(
+                                    name = "Ejemplo de actualización",
+                                    value = "{\n" +
+                                            "  \"descripcion\": \"Hamburguesa con doble carne, lechuga, tomate y queso cheddar\",\n" +
+                                            "  \"precio\": 18000\n" +
+                                            "}"
+                            )
+                    )
+            )
+            @Valid @RequestBody PlatoUpdateRequestDto platoUpdateRequestDto) {
+        PlatoResponseDto platoResponse = plazoletaHandler.actualizarPlato(id, platoUpdateRequestDto);
+        return new ResponseEntity<>(platoResponse, HttpStatus.OK);
     }
 }
