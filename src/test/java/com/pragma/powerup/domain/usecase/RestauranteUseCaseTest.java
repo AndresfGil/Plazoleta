@@ -148,3 +148,4 @@ class RestauranteUseCaseTest {
         verify(restaurantePersistencePort, never()).guardarRestaurante(any(Restaurante.class));
     }
 }
+

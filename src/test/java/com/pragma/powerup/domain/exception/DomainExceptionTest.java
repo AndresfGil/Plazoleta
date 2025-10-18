@@ -71,3 +71,4 @@ class DomainExceptionTest {
         assertTrue(toString.contains(mensaje));
     }
 }
+
