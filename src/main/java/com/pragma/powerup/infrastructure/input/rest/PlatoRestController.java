@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,10 @@ public class PlatoRestController {
 
     @Operation(
             summary = "Crear un nuevo plato",
-            description = "Registra un nuevo plato en el sistema para un restaurante específico."
+            description = "Registra un nuevo plato en el sistema para un restaurante específico. " +
+                    "Requiere autenticación JWT y rol de PROPIETARIO. " +
+                    "Solo el propietario del restaurante puede crear platos para su restaurante.",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -61,6 +65,34 @@ public class PlatoRestController {
                                     @ExampleObject(
                                             name = "Precio inválido",
                                             value = "{\"message\": \"El precio debe ser un número positivo\"}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "No autorizado - Token JWT inválido o faltante",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Token inválido",
+                                    value = "{\"message\": \"Token JWT inválido o faltante. Inicie sesión para acceder a este recurso.\"}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Prohibido - Sin permisos de propietario o no es propietario del restaurante",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Sin permisos de propietario",
+                                            value = "{\"message\": \"Acceso denegado. Se requiere rol de propietario.\"}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "No es propietario del restaurante",
+                                            value = "{\"message\": \"No tienes permisos para gestionar platos de este restaurante. Solo el propietario puede crear o modificar platos.\"}"
                                     )
                             }
                     )
@@ -102,7 +134,10 @@ public class PlatoRestController {
 
     @Operation(
             summary = "Actualizar parcialmente un plato",
-            description = "Actualiza solo el precio y descripción de un plato existente. Solo se pueden modificar estos dos campos específicos."
+            description = "Actualiza solo el precio y descripción de un plato existente. Solo se pueden modificar estos dos campos específicos. " +
+                    "Requiere autenticación JWT y rol de PROPIETARIO. " +
+                    "Solo el propietario del restaurante puede modificar platos de su restaurante.",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -139,6 +174,34 @@ public class PlatoRestController {
                                     @ExampleObject(
                                             name = "Precio inválido",
                                             value = "{\"message\": \"El precio debe ser un número positivo\"}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "No autorizado - Token JWT inválido o faltante",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Token inválido",
+                                    value = "{\"message\": \"Token JWT inválido o faltante. Inicie sesión para acceder a este recurso.\"}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Prohibido - Sin permisos de propietario o no es propietario del restaurante",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Sin permisos de propietario",
+                                            value = "{\"message\": \"Acceso denegado. Se requiere rol de propietario.\"}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "No es propietario del restaurante",
+                                            value = "{\"message\": \"No tienes permisos para gestionar platos de este restaurante. Solo el propietario puede crear o modificar platos.\"}"
                                     )
                             }
                     )

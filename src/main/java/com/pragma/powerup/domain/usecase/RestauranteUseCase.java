@@ -24,8 +24,14 @@ public class RestauranteUseCase implements IRestauranteServicePort {
         return restaurantePersistencePort.guardarRestaurante(restaurante);
     }
 
+    @Override
+    public Restaurante obtenerRestaurantePorId(Long id) {
+        return restaurantePersistencePort.obtenerRestaurantePorId(id);
+    }
+
     private void validarPropietario(Long idPropietario) {
         try {
+            System.out.println("DEBUG: Validando propietario con ID: " + idPropietario);
             UsuarioResponseDto usuario = usuarioServicePort.obtenerUsuarioPorId(idPropietario);
             
             if (usuario.getActivo().equals(false)) {

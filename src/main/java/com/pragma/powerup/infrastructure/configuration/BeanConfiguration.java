@@ -14,6 +14,7 @@ import com.pragma.powerup.infrastructure.out.jpa.mapper.IRestauranteEntityMapper
 import com.pragma.powerup.infrastructure.out.jpa.mapper.IPlatoEntityMapper;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IPlatoRepository;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IRestauranteRepository;
+import com.pragma.powerup.infrastructure.security.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +27,7 @@ public class BeanConfiguration {
     private final IRestauranteEntityMapper restauranteEntityMapper;
     private final IPlatoRepository platoRepository;
     private final IPlatoEntityMapper platoEntityMapper;
-    private final WebClient webClient;
+    private final AuthenticationService authenticationService;
 
     @Bean
     public IRestaurantePersistencePort restaurantePersistencePort() {
@@ -40,7 +41,7 @@ public class BeanConfiguration {
 
     @Bean
     public IUsuarioServicePort usuarioServicePort() {
-        return new UsuarioHttpAdapter(webClient);
+        return new UsuarioHttpAdapter();
     }
 
     @Bean
@@ -50,6 +51,6 @@ public class BeanConfiguration {
 
     @Bean
     public IPlatoServicePort platoServicePort() {
-        return new PlatoUseCase(platoPersistencePort());
+        return new PlatoUseCase(platoPersistencePort(), restauranteServicePort(), authenticationService);
     }
 }
