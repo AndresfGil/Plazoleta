@@ -5,4 +5,6 @@ import com.pragma.powerup.domain.model.Plato;
 public interface IPlatoServicePort {
 
     Plato guardarPlato(Plato plato);
+    
+    Plato actualizarPlato(Plato plato);
 }

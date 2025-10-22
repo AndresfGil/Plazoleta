@@ -8,6 +8,8 @@ import com.pragma.powerup.infrastructure.out.jpa.repository.IPlatoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 public class PlatoJpaAdapter implements IPlatoPersistencePort {
@@ -19,5 +21,29 @@ public class PlatoJpaAdapter implements IPlatoPersistencePort {
     public Plato guardarPlato(Plato plato) {
         PlatoEntity platoEntity = platoRepository.save(platoEntityMapper.toEntity(plato));
         return platoEntityMapper.toPlato(platoEntity);
+    }
+
+    @Override
+    public Plato obtenerPlatoPorId(Long id) {
+        Optional<PlatoEntity> platoEntityOptional = platoRepository.findById(id);
+        if (platoEntityOptional.isEmpty()) {
+            throw new RuntimeException("Plato no encontrado con ID: " + id);
+        }
+        return platoEntityMapper.toPlato(platoEntityOptional.get());
+    }
+
+    @Override
+    public Plato actualizarPrecioYDescripcion(Long id, Integer precio, String descripcion) {
+        if (!platoRepository.existsById(id)) {
+            throw new RuntimeException("Plato no encontrado con ID: " + id);
+        }
+        
+        int filasActualizadas = platoRepository.actualizarPrecioYDescripcion(id, precio, descripcion);
+        
+        if (filasActualizadas == 0) {
+            throw new RuntimeException("No se pudo actualizar el plato con ID: " + id);
+        }
+        
+        return obtenerPlatoPorId(id);
     }
 }

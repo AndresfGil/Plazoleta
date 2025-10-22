@@ -1,7 +1,11 @@
 package com.pragma.powerup.domain.usecase;
 
+import com.pragma.powerup.domain.api.IRestauranteServicePort;
+import com.pragma.powerup.domain.exception.DomainException;
 import com.pragma.powerup.domain.model.Plato;
+import com.pragma.powerup.domain.model.Restaurante;
 import com.pragma.powerup.domain.spi.IPlatoPersistencePort;
+import com.pragma.powerup.infrastructure.security.AuthenticationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,7 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -19,10 +23,17 @@ class PlatoUseCaseTest {
     @Mock
     private IPlatoPersistencePort platoPersistencePort;
 
+    @Mock
+    private IRestauranteServicePort restauranteServicePort;
+
+    @Mock
+    private AuthenticationService authenticationService;
+
     @InjectMocks
     private PlatoUseCase platoUseCase;
 
     private Plato plato;
+    private Restaurante restaurante;
 
     @BeforeEach
     void setUp() {
@@ -35,241 +46,335 @@ class PlatoUseCaseTest {
         plato.setCategoria("Comida rapida");
         plato.setActivo(true);
         plato.setIdRestaurante(1L);
+
+        restaurante = new Restaurante();
+        restaurante.setId(1L);
+        restaurante.setNombre("Frisby");
+        restaurante.setNit(123456);
+        restaurante.setDireccion("Cra 23 Calle 5");
+        restaurante.setTelefono("+573001234567");
+        restaurante.setUrlLogo("https://example.com/logo.png");
+        restaurante.setIdPropietario(10L);
     }
 
     @Test
-    void guardarPlato_cuandoPlatoEsValido_debeGuardarPlato() {
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
-        platoEsperado.setNombre("Hamburguesa");
-        platoEsperado.setDescripcion("Deliciosa hamburguesa con carne");
-        platoEsperado.setPrecio(15000);
-        platoEsperado.setUrlImagen("https://example.com/hamburguesa.jpg");
-        platoEsperado.setCategoria("Comida rapida");
-        platoEsperado.setActivo(true);
-        platoEsperado.setIdRestaurante(1L);
-
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+    void guardarPlato_cuandoUsuarioEsPropietarioDelRestaurante_debeGuardarPlato() {
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(restaurante);
+        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(plato);
 
         Plato resultado = platoUseCase.guardarPlato(plato);
 
         assertNotNull(resultado);
-        assertEquals(platoEsperado.getId(), resultado.getId());
-        assertEquals(platoEsperado.getNombre(), resultado.getNombre());
-        assertEquals(platoEsperado.getDescripcion(), resultado.getDescripcion());
-        assertEquals(platoEsperado.getPrecio(), resultado.getPrecio());
-        assertEquals(platoEsperado.getUrlImagen(), resultado.getUrlImagen());
-        assertEquals(platoEsperado.getCategoria(), resultado.getCategoria());
-        assertEquals(platoEsperado.getActivo(), resultado.getActivo());
-        assertEquals(platoEsperado.getIdRestaurante(), resultado.getIdRestaurante());
-
+        assertEquals(plato.getId(), resultado.getId());
+        assertEquals(plato.getNombre(), resultado.getNombre());
+        verify(authenticationService).obtenerIdUsuarioAutenticado();
+        verify(authenticationService).obtenerRolUsuarioAutenticado();
+        verify(restauranteServicePort).obtenerRestaurantePorId(1L);
         verify(platoPersistencePort).guardarPlato(plato);
     }
 
     @Test
-    void guardarPlato_cuandoPlatoEsNull_debePropagarExcepcion() {
-        when(platoPersistencePort.guardarPlato(null))
-                .thenThrow(new IllegalArgumentException("El plato no puede ser null"));
+    void guardarPlato_cuandoUsuarioNoEsPropietario_debeLanzarExcepcion() {
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("CLIENTE");
 
-        assertThrows(IllegalArgumentException.class, 
-                () -> platoUseCase.guardarPlato(null));
+        DomainException exception = assertThrows(DomainException.class,
+                () -> platoUseCase.guardarPlato(plato));
 
-        verify(platoPersistencePort).guardarPlato(null);
+        assertTrue(exception.getMessage().contains("Solo los usuarios con rol PROPIETARIO"));
+        assertTrue(exception.getMessage().contains("CLIENTE"));
+        verify(authenticationService).obtenerRolUsuarioAutenticado();
+        verify(restauranteServicePort, never()).obtenerRestaurantePorId(anyLong());
+        verify(platoPersistencePort, never()).guardarPlato(any(Plato.class));
     }
 
     @Test
-    void guardarPlato_cuandoPlatoTieneIdNull_debeGuardarPlato() {
-        plato.setId(null);
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
-        platoEsperado.setNombre("Hamburguesa");
+    void guardarPlato_cuandoRestauranteNoExiste_debeLanzarExcepcion() {
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(null);
 
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+        DomainException exception = assertThrows(DomainException.class,
+                () -> platoUseCase.guardarPlato(plato));
 
-        Plato resultado = platoUseCase.guardarPlato(plato);
+        assertEquals("Restaurante no encontrado con ID: 1", exception.getMessage());
+        verify(restauranteServicePort).obtenerRestaurantePorId(1L);
+        verify(platoPersistencePort, never()).guardarPlato(any(Plato.class));
+    }
+
+    @Test
+    void guardarPlato_cuandoUsuarioNoEsPropietarioDelRestaurante_debeLanzarExcepcion() {
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(99L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(restaurante);
+
+        DomainException exception = assertThrows(DomainException.class,
+                () -> platoUseCase.guardarPlato(plato));
+
+        assertTrue(exception.getMessage().contains("No tienes permisos"));
+        assertTrue(exception.getMessage().contains("10"));
+        assertTrue(exception.getMessage().contains("99"));
+        verify(platoPersistencePort, never()).guardarPlato(any(Plato.class));
+    }
+
+    @Test
+    void actualizarPlato_cuandoPlatoExisteYUsuarioEsPropietario_debeActualizarPlato() {
+        Plato platoExistente = new Plato();
+        platoExistente.setId(1L);
+        platoExistente.setIdRestaurante(1L);
+
+        Plato platoActualizado = new Plato();
+        platoActualizado.setId(1L);
+        platoActualizado.setDescripcion("Nueva descripción");
+        platoActualizado.setPrecio(18000);
+
+        when(platoPersistencePort.obtenerPlatoPorId(1L)).thenReturn(platoExistente);
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(restaurante);
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenReturn(platoActualizado);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
 
         assertNotNull(resultado);
-        assertEquals(1L, resultado.getId());
-        verify(platoPersistencePort).guardarPlato(plato);
+        verify(platoPersistencePort).obtenerPlatoPorId(1L);
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, 15000, "Deliciosa hamburguesa con carne");
     }
 
     @Test
-    void guardarPlato_cuandoPlatoTieneNombreNull_debeGuardarPlato() {
-        plato.setNombre(null);
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
-        platoEsperado.setNombre(null);
+    void actualizarPlato_cuandoPlatoNoExiste_debeLanzarExcepcion() {
+        when(platoPersistencePort.obtenerPlatoPorId(1L)).thenReturn(null);
 
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+        DomainException exception = assertThrows(DomainException.class,
+                () -> platoUseCase.actualizarPlato(plato));
 
-        Plato resultado = platoUseCase.guardarPlato(plato);
-
-        assertNotNull(resultado);
-        assertNull(resultado.getNombre());
-        verify(platoPersistencePort).guardarPlato(plato);
+        assertEquals("Plato no encontrado con ID: 1", exception.getMessage());
+        verify(platoPersistencePort).obtenerPlatoPorId(1L);
+        verify(authenticationService, never()).obtenerIdUsuarioAutenticado();
+        verify(platoPersistencePort, never()).actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString());
     }
 
     @Test
-    void guardarPlato_cuandoPlatoTienePrecioNull_debeGuardarPlato() {
-        plato.setPrecio(null);
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
-        platoEsperado.setPrecio(null);
+    void actualizarPlato_cuandoUsuarioNoEsPropietario_debeLanzarExcepcion() {
+        Plato platoExistente = new Plato();
+        platoExistente.setId(1L);
+        platoExistente.setIdRestaurante(1L);
 
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+        when(platoPersistencePort.obtenerPlatoPorId(1L)).thenReturn(platoExistente);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("EMPLEADO");
 
-        Plato resultado = platoUseCase.guardarPlato(plato);
+        DomainException exception = assertThrows(DomainException.class,
+                () -> platoUseCase.actualizarPlato(plato));
 
-        assertNotNull(resultado);
-        assertNull(resultado.getPrecio());
-        verify(platoPersistencePort).guardarPlato(plato);
+        assertTrue(exception.getMessage().contains("Solo los usuarios con rol PROPIETARIO"));
+        verify(platoPersistencePort, never()).actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString());
     }
 
     @Test
-    void guardarPlato_cuandoPlatoTieneActivoNull_debeGuardarPlato() {
-        plato.setActivo(null);
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
-        platoEsperado.setActivo(null);
+    void actualizarPlato_cuandoUsuarioNoEsPropietarioDelRestaurante_debeLanzarExcepcion() {
+        Plato platoExistente = new Plato();
+        platoExistente.setId(1L);
+        platoExistente.setIdRestaurante(1L);
 
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+        when(platoPersistencePort.obtenerPlatoPorId(1L)).thenReturn(platoExistente);
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(99L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(restaurante);
 
-        Plato resultado = platoUseCase.guardarPlato(plato);
+        DomainException exception = assertThrows(DomainException.class,
+                () -> platoUseCase.actualizarPlato(plato));
 
-        assertNotNull(resultado);
-        assertNull(resultado.getActivo());
-        verify(platoPersistencePort).guardarPlato(plato);
+        assertTrue(exception.getMessage().contains("No tienes permisos"));
+        verify(platoPersistencePort, never()).actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString());
     }
 
     @Test
-    void guardarPlato_cuandoPlatoTieneIdRestauranteNull_debeGuardarPlato() {
-        plato.setIdRestaurante(null);
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
-        platoEsperado.setIdRestaurante(null);
+    void guardarPlato_cuandoRolEsAdministrador_debeLanzarExcepcion() {
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("ADMINISTRADOR");
 
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+        DomainException exception = assertThrows(DomainException.class,
+                () -> platoUseCase.guardarPlato(plato));
 
-        Plato resultado = platoUseCase.guardarPlato(plato);
-
-        assertNotNull(resultado);
-        assertNull(resultado.getIdRestaurante());
-        verify(platoPersistencePort).guardarPlato(plato);
+        assertTrue(exception.getMessage().contains("ADMINISTRADOR"));
+        verify(platoPersistencePort, never()).guardarPlato(any(Plato.class));
     }
 
     @Test
     void guardarPlato_cuandoPersistenceLanzaExcepcion_debePropagarla() {
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(restaurante);
         when(platoPersistencePort.guardarPlato(any(Plato.class)))
                 .thenThrow(new RuntimeException("Error en base de datos"));
 
-        assertThrows(RuntimeException.class, 
-                () -> platoUseCase.guardarPlato(plato));
+        assertThrows(RuntimeException.class, () -> platoUseCase.guardarPlato(plato));
 
         verify(platoPersistencePort).guardarPlato(plato);
     }
 
     @Test
-    void guardarPlato_cuandoPlatoTieneTodosLosCamposNull_debeGuardarPlato() {
-        Plato platoNulo = new Plato();
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
+    void actualizarPlato_cuandoPersistenceLanzaExcepcion_debePropagarla() {
+        Plato platoExistente = new Plato();
+        platoExistente.setId(1L);
+        platoExistente.setIdRestaurante(1L);
 
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+        when(platoPersistencePort.obtenerPlatoPorId(1L)).thenReturn(platoExistente);
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(restaurante);
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenThrow(new RuntimeException("Error en base de datos"));
 
-        Plato resultado = platoUseCase.guardarPlato(platoNulo);
+        assertThrows(RuntimeException.class, () -> platoUseCase.actualizarPlato(plato));
 
-        assertNotNull(resultado);
-        assertEquals(1L, resultado.getId());
-        verify(platoPersistencePort).guardarPlato(platoNulo);
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, 15000, "Deliciosa hamburguesa con carne");
     }
 
     @Test
-    void guardarPlato_cuandoPlatoTienePrecioCero_debeGuardarPlato() {
-        plato.setPrecio(0);
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
-        platoEsperado.setPrecio(0);
+    void guardarPlato_cuandoRestauranteServiceLanzaExcepcion_debePropagarla() {
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L))
+                .thenThrow(new RuntimeException("Error al obtener restaurante"));
 
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+        assertThrows(RuntimeException.class, () -> platoUseCase.guardarPlato(plato));
+
+        verify(platoPersistencePort, never()).guardarPlato(any(Plato.class));
+    }
+
+    @Test
+    void actualizarPlato_cuandoPlatoTienePrecioNull_debeActualizarCorrectamente() {
+        plato.setPrecio(null);
+        Plato platoExistente = new Plato();
+        platoExistente.setId(1L);
+        platoExistente.setIdRestaurante(1L);
+
+        when(platoPersistencePort.obtenerPlatoPorId(1L)).thenReturn(platoExistente);
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(restaurante);
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), any(), anyString()))
+                .thenReturn(plato);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
+
+        assertNotNull(resultado);
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, null, "Deliciosa hamburguesa con carne");
+    }
+
+    @Test
+    void actualizarPlato_cuandoPlatoTieneDescripcionNull_debeActualizarCorrectamente() {
+        plato.setDescripcion(null);
+        Plato platoExistente = new Plato();
+        platoExistente.setId(1L);
+        platoExistente.setIdRestaurante(1L);
+
+        when(platoPersistencePort.obtenerPlatoPorId(1L)).thenReturn(platoExistente);
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(restaurante);
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), any()))
+                .thenReturn(plato);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
+
+        assertNotNull(resultado);
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, 15000, null);
+    }
+
+    @Test
+    void guardarPlato_cuandoPlatoTieneIdRestauranteDiferente_debeValidarCorrectamente() {
+        plato.setIdRestaurante(2L);
+        Restaurante otroRestaurante = new Restaurante();
+        otroRestaurante.setId(2L);
+        otroRestaurante.setIdPropietario(10L);
+
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(2L)).thenReturn(otroRestaurante);
+        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(plato);
 
         Plato resultado = platoUseCase.guardarPlato(plato);
 
         assertNotNull(resultado);
-        assertEquals(0, resultado.getPrecio());
-        verify(platoPersistencePort).guardarPlato(plato);
+        verify(restauranteServicePort).obtenerRestaurantePorId(2L);
     }
 
     @Test
-    void guardarPlato_cuandoPlatoTienePrecioNegativo_debeGuardarPlato() {
-        plato.setPrecio(-1000);
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
-        platoEsperado.setPrecio(-1000);
+    void actualizarPlato_cuandoPlatoExistenteEnOtroRestaurante_debeValidarCorrectamente() {
+        Plato platoExistente = new Plato();
+        platoExistente.setId(1L);
+        platoExistente.setIdRestaurante(2L);
 
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+        Restaurante otroRestaurante = new Restaurante();
+        otroRestaurante.setId(2L);
+        otroRestaurante.setIdPropietario(10L);
 
-        Plato resultado = platoUseCase.guardarPlato(plato);
+        when(platoPersistencePort.obtenerPlatoPorId(1L)).thenReturn(platoExistente);
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(2L)).thenReturn(otroRestaurante);
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenReturn(plato);
+
+        Plato resultado = platoUseCase.actualizarPlato(plato);
 
         assertNotNull(resultado);
-        assertEquals(-1000, resultado.getPrecio());
-        verify(platoPersistencePort).guardarPlato(plato);
+        verify(restauranteServicePort).obtenerRestaurantePorId(2L);
     }
 
     @Test
-    void guardarPlato_cuandoPlatoTieneActivoFalse_debeGuardarPlato() {
-        plato.setActivo(false);
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
-        platoEsperado.setActivo(false);
+    void guardarPlato_cuandoAuthenticationServiceRetornaNull_debeValidarCorrectamente() {
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(null);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(restaurante);
 
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+        assertThrows(Exception.class, () -> platoUseCase.guardarPlato(plato));
 
-        Plato resultado = platoUseCase.guardarPlato(plato);
-
-        assertNotNull(resultado);
-        assertFalse(resultado.getActivo());
-        verify(platoPersistencePort).guardarPlato(plato);
+        verify(platoPersistencePort, never()).guardarPlato(any(Plato.class));
     }
 
     @Test
-    void guardarPlato_cuandoPlatoTieneActivoTrue_debeGuardarPlato() {
-        plato.setActivo(true);
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
-        platoEsperado.setActivo(true);
+    void actualizarPlato_cuandoPrecioCambiaAValorDiferente_debeActualizarCorrectamente() {
+        plato.setPrecio(20000);
+        Plato platoExistente = new Plato();
+        platoExistente.setId(1L);
+        platoExistente.setIdRestaurante(1L);
 
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+        when(platoPersistencePort.obtenerPlatoPorId(1L)).thenReturn(platoExistente);
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(restaurante);
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenReturn(plato);
 
-        Plato resultado = platoUseCase.guardarPlato(plato);
+        Plato resultado = platoUseCase.actualizarPlato(plato);
 
         assertNotNull(resultado);
-        assertTrue(resultado.getActivo());
-        verify(platoPersistencePort).guardarPlato(plato);
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(1L, 20000, "Deliciosa hamburguesa con carne");
     }
 
     @Test
-    void guardarPlato_cuandoPlatoTieneStringVacio_debeGuardarPlato() {
-        plato.setNombre("");
-        plato.setDescripcion("");
-        plato.setUrlImagen("");
-        plato.setCategoria("");
-        
-        Plato platoEsperado = new Plato();
-        platoEsperado.setId(1L);
-        platoEsperado.setNombre("");
-        platoEsperado.setDescripcion("");
-        platoEsperado.setUrlImagen("");
-        platoEsperado.setCategoria("");
+    void actualizarPlato_cuandoDescripcionCambiaAValorDiferente_debeActualizarCorrectamente() {
+        plato.setDescripcion("Hamburguesa premium con ingredientes especiales");
+        Plato platoExistente = new Plato();
+        platoExistente.setId(1L);
+        platoExistente.setIdRestaurante(1L);
 
-        when(platoPersistencePort.guardarPlato(any(Plato.class))).thenReturn(platoEsperado);
+        when(platoPersistencePort.obtenerPlatoPorId(1L)).thenReturn(platoExistente);
+        when(authenticationService.obtenerIdUsuarioAutenticado()).thenReturn(10L);
+        when(authenticationService.obtenerRolUsuarioAutenticado()).thenReturn("PROPIETARIO");
+        when(restauranteServicePort.obtenerRestaurantePorId(1L)).thenReturn(restaurante);
+        when(platoPersistencePort.actualizarPrecioYDescripcion(anyLong(), anyInt(), anyString()))
+                .thenReturn(plato);
 
-        Plato resultado = platoUseCase.guardarPlato(plato);
+        Plato resultado = platoUseCase.actualizarPlato(plato);
 
         assertNotNull(resultado);
-        assertEquals("", resultado.getNombre());
-        assertEquals("", resultado.getDescripcion());
-        assertEquals("", resultado.getUrlImagen());
-        assertEquals("", resultado.getCategoria());
-        verify(platoPersistencePort).guardarPlato(plato);
+        verify(platoPersistencePort).actualizarPrecioYDescripcion(
+                1L, 15000, "Hamburguesa premium con ingredientes especiales");
     }
 }
+

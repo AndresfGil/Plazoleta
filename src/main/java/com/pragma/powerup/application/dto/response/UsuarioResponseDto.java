@@ -12,6 +12,9 @@ public class UsuarioResponseDto {
     @Schema(description = "ID del rol del usuario", example = "2")
     private Long idRol;
 
+    @Schema(description = "Correo del usuario", example = "prueba@gmail.com")
+    private String correo;
+
     @Schema(description = "Estado del usuario", example = "true")
     private Boolean activo;
 }

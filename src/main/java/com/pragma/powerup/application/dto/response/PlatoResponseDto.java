@@ -8,9 +8,6 @@ import lombok.Setter;
 @Setter
 public class PlatoResponseDto {
 
-    @Schema(description = "ID del plato", example = "1")
-    private Long id;
-
     @Schema(description = "Nombre del plato", example = "Hamburguesa Clásica")
     private String nombre;
 
@@ -20,12 +17,4 @@ public class PlatoResponseDto {
     @Schema(description = "Precio del plato", example = "15000")
     private Integer precio;
 
-    @Schema(description = "URL de la imagen del plato", example = "https://example.com/hamburguesa.jpg")
-    private String urlImagen;
-
-    @Schema(description = "Categoría del plato", example = "Hamburguesas")
-    private String categoria;
-
-    @Schema(description = "Estado activo del plato", example = "true")
-    private Boolean activo;
 }

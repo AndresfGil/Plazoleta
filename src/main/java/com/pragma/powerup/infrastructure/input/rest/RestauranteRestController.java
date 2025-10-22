@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,9 @@ public class RestauranteRestController {
 
     @Operation(
             summary = "Crear un nuevo restaurante",
-            description = "Registra un nuevo restaurante en el sistema. El restaurante debe tener un propietario válido."
+            description = "Registra un nuevo restaurante en el sistema. El restaurante debe tener un propietario válido. " +
+                    "Requiere autenticación JWT y rol de ADMINISTRADOR.",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -66,6 +69,28 @@ public class RestauranteRestController {
                                             value = "{\"message\": \"El telefono debe tener entre 10 y 13 dígitos\"}"
                                     )
                             }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "No autorizado - Token JWT inválido o faltante",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Token inválido",
+                                    value = "{\"message\": \"Token JWT inválido o faltante. Inicie sesión para acceder a este recurso.\"}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Prohibido - Sin permisos de administrador",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Sin permisos",
+                                    value = "{\"message\": \"Acceso denegado. Se requiere rol de administrador.\"}"
+                            )
                     )
             ),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor",

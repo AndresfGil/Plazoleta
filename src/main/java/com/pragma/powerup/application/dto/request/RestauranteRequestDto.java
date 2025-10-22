@@ -37,8 +37,9 @@ public class RestauranteRequestDto {
     @Schema(description = "URL del logo del restaurante", example = "https://example.com/logo.png", required = true)
     private String urlLogo;
 
-    @NotNull(message = "El id del propietario es obligatorio")
+    @NotNull(message = "El ID del propietario es obligatorio")
     @Positive(message = "El ID del propietario debe ser un número positivo")
     @Schema(description = "ID del propietario del restaurante", example = "1", required = true)
     private Long idPropietario;
+
 }
