@@ -40,6 +40,18 @@ public class PlatoUseCase implements IPlatoServicePort {
         );
     }
 
+    @Override
+    public Plato togglePlatoActivo(Long id) {
+        Plato platoExistente = platoPersistencePort.obtenerPlatoPorId(id);
+        if (platoExistente == null) {
+            throw new DomainException("Plato no encontrado con ID: " + id);
+        }
+        
+        validarPropietarioDelRestaurante(platoExistente.getIdRestaurante());
+        
+        return platoPersistencePort.togglePlatoActivo(id);
+    }
+
     private void validarPropietarioDelRestaurante(Long idRestaurante) {
         Long idUsuarioAutenticado = authenticationService.obtenerIdUsuarioAutenticado();
         String rolUsuario = authenticationService.obtenerRolUsuarioAutenticado();

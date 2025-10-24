@@ -1,10 +1,12 @@
 package com.pragma.powerup.infrastructure.input.rest;
 
 import com.pragma.powerup.application.dto.request.RestauranteRequestDto;
+import com.pragma.powerup.application.dto.response.RestauranteListaResponseDto;
 import com.pragma.powerup.application.dto.response.RestauranteResponseDto;
 import com.pragma.powerup.application.dto.response.UsuarioResponseDto;
 import com.pragma.powerup.application.handler.IPlazoletaHandler;
 import com.pragma.powerup.domain.spi.IUsuarioServicePort;
+import org.springframework.data.domain.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -138,5 +140,28 @@ public class RestauranteRestController {
         } catch (Exception e) {
             throw new RuntimeException("Error al consultar usuario: " + e.getMessage());
         }
+    }
+
+    @Operation(
+            summary = "Listar restaurantes paginados",
+            description = "Obtiene un listado paginado de restaurantes ordenados alfabéticamente por nombre. " +
+                    "Solo devuelve nombre y URL del logo."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Lista de restaurantes obtenida exitosamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Page.class)
+                    )
+            )
+    })
+    @GetMapping
+    public ResponseEntity<Page<RestauranteListaResponseDto>> obtenerRestaurantesPaginados(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<RestauranteListaResponseDto> restaurantes = plazoletaHandler.obtenerRestaurantesPaginados(page, size);
+        return new ResponseEntity<>(restaurantes, HttpStatus.OK);
     }
 }

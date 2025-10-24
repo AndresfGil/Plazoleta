@@ -7,4 +7,6 @@ public interface IPlatoServicePort {
     Plato guardarPlato(Plato plato);
     
     Plato actualizarPlato(Plato plato);
+    
+    Plato togglePlatoActivo(Long id);
 }

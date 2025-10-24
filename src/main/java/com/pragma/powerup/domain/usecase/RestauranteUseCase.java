@@ -6,6 +6,10 @@ import com.pragma.powerup.domain.exception.DomainException;
 import com.pragma.powerup.domain.model.Restaurante;
 import com.pragma.powerup.domain.spi.IRestaurantePersistencePort;
 import com.pragma.powerup.domain.spi.IUsuarioServicePort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 public class RestauranteUseCase implements IRestauranteServicePort {
 
@@ -27,6 +31,12 @@ public class RestauranteUseCase implements IRestauranteServicePort {
     @Override
     public Restaurante obtenerRestaurantePorId(Long id) {
         return restaurantePersistencePort.obtenerRestaurantePorId(id);
+    }
+
+    @Override
+    public Page<Restaurante> obtenerRestaurantesPaginados(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+        return restaurantePersistencePort.obtenerRestaurantesPaginados(pageable);
     }
 
     private void validarPropietario(Long idPropietario) {

@@ -9,4 +9,6 @@ public interface IPlatoPersistencePort {
     Plato obtenerPlatoPorId(Long id);
     
     Plato actualizarPrecioYDescripcion(Long id, Integer precio, String descripcion);
+
+    Plato togglePlatoActivo(Long id);
 }

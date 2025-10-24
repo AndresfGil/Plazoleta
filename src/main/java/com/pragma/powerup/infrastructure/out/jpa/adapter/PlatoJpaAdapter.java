@@ -46,4 +46,19 @@ public class PlatoJpaAdapter implements IPlatoPersistencePort {
         
         return obtenerPlatoPorId(id);
     }
+
+    @Override
+    public Plato togglePlatoActivo(Long id) {
+        if (!platoRepository.existsById(id)) {
+            throw new RuntimeException("Plato no encontrado con ID: " + id);
+        }
+        
+        int filasActualizadas = platoRepository.toggleActivo(id);
+        
+        if (filasActualizadas == 0) {
+            throw new RuntimeException("No se pudo cambiar el estado del plato con ID: " + id);
+        }
+        
+        return obtenerPlatoPorId(id);
+    }
 }

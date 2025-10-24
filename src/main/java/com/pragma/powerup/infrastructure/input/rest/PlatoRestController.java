@@ -244,7 +244,45 @@ public class PlatoRestController {
                     )
             )
             @Valid @RequestBody PlatoUpdateRequestDto platoUpdateRequestDto) {
-        PlatoResponseDto platoResponse = plazoletaHandler.actualizarPlato(id, platoUpdateRequestDto);
-        return new ResponseEntity<>(platoResponse, HttpStatus.OK);
+            PlatoResponseDto platoResponse = plazoletaHandler.actualizarPlato(id, platoUpdateRequestDto);
+            return new ResponseEntity<>(platoResponse, HttpStatus.OK);
+        }
+
+        @Operation(
+                summary = "Activar/desactivar un plato",
+                description = "Cambia el estado de activo/inactivo de un plato. " +
+                        "Requiere autenticación JWT y rol de PROPIETARIO. " +
+                        "Solo el propietario del restaurante puede cambiar el estado de sus platos.",
+                security = @SecurityRequirement(name = "bearerAuth")
+        )
+        @ApiResponses(value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Estado del plato actualizado exitosamente",
+                        content = @Content(
+                                mediaType = "application/json",
+                                schema = @Schema(implementation = PlatoResponseDto.class)
+                        )
+                ),
+                @ApiResponse(
+                        responseCode = "401",
+                        description = "No autorizado - Token JWT inválido o faltante",
+                        content = @Content(mediaType = "application/json")
+                ),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Prohibido - Sin permisos de propietario",
+                        content = @Content(mediaType = "application/json")
+                ),
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "Plato no encontrado",
+                        content = @Content(mediaType = "application/json")
+                )
+        })
+        @PatchMapping("/{id}/toggle-activo")
+        public ResponseEntity<PlatoResponseDto> togglePlatoActivo(@PathVariable Long id) {
+            PlatoResponseDto platoResponse = plazoletaHandler.togglePlatoActivo(id);
+            return new ResponseEntity<>(platoResponse, HttpStatus.OK);
+        }
     }
-}

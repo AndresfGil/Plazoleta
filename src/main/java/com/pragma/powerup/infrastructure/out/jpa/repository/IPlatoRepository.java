@@ -19,4 +19,8 @@ public interface IPlatoRepository extends JpaRepository<PlatoEntity, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE PlatoEntity p SET p.precio = :precio, p.descripcion = :descripcion WHERE p.id = :id")
     int actualizarPrecioYDescripcion(@Param("id") Long id, @Param("precio") Integer precio, @Param("descripcion") String descripcion);
+    
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE PlatoEntity p SET p.activo = CASE WHEN p.activo = true THEN false ELSE true END WHERE p.id = :id")
+    int toggleActivo(@Param("id") Long id);
 }
