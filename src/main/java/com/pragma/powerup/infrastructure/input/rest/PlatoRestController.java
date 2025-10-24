@@ -2,8 +2,10 @@ package com.pragma.powerup.infrastructure.input.rest;
 
 import com.pragma.powerup.application.dto.request.PlatoRequestDto;
 import com.pragma.powerup.application.dto.request.PlatoUpdateRequestDto;
+import com.pragma.powerup.application.dto.response.PlatoListaResponseDto;
 import com.pragma.powerup.application.dto.response.PlatoResponseDto;
 import com.pragma.powerup.application.handler.IPlazoletaHandler;
+import org.springframework.data.domain.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -280,9 +282,80 @@ public class PlatoRestController {
                         content = @Content(mediaType = "application/json")
                 )
         })
-        @PatchMapping("/{id}/toggle-activo")
-        public ResponseEntity<PlatoResponseDto> togglePlatoActivo(@PathVariable Long id) {
-            PlatoResponseDto platoResponse = plazoletaHandler.togglePlatoActivo(id);
-            return new ResponseEntity<>(platoResponse, HttpStatus.OK);
-        }
-    }
+             @PatchMapping("/{id}/toggle-activo")
+             public ResponseEntity<PlatoResponseDto> togglePlatoActivo(@PathVariable Long id) {
+                 PlatoResponseDto platoResponse = plazoletaHandler.togglePlatoActivo(id);
+                 return new ResponseEntity<>(platoResponse, HttpStatus.OK);
+             }
+
+             @Operation(
+                     summary = "Listar platos paginados con filtros",
+                     description = "Obtiene un listado paginado de platos de un restaurante específico. " +
+                             "Permite filtrar por categoría y paginar los resultados. " +
+                             "Los platos se ordenan alfabéticamente por nombre."
+             )
+             @ApiResponses(value = {
+                     @ApiResponse(
+                             responseCode = "200",
+                             description = "Lista de platos obtenida exitosamente",
+                             content = @Content(
+                                     mediaType = "application/json",
+                                     schema = @Schema(implementation = Page.class),
+                                     examples = @ExampleObject(
+                                             name = "Lista de platos",
+                                             value = "{\n" +
+                                                     "  \"content\": [\n" +
+                                                     "    {\n" +
+                                                     "      \"id\": 1,\n" +
+                                                     "      \"nombre\": \"Hamburguesa Clásica\",\n" +
+                                                     "      \"descripcion\": \"Hamburguesa con carne, lechuga, tomate y queso\",\n" +
+                                                     "      \"precio\": 15000,\n" +
+                                                     "      \"urlImagen\": \"https://example.com/hamburguesa.jpg\",\n" +
+                                                     "      \"categoria\": \"Hamburguesas\",\n" +
+                                                     "      \"activo\": true\n" +
+                                                     "    }\n" +
+                                                     "  ],\n" +
+                                                     "  \"pageable\": {\n" +
+                                                     "    \"pageNumber\": 0,\n" +
+                                                     "    \"pageSize\": 10\n" +
+                                                     "  },\n" +
+                                                     "  \"totalElements\": 15,\n" +
+                                                     "  \"totalPages\": 2\n" +
+                                                     "}"
+                                     )
+                             )
+                     ),
+                     @ApiResponse(
+                             responseCode = "400",
+                             description = "Parámetros inválidos",
+                             content = @Content(
+                                     mediaType = "application/json",
+                                     examples = @ExampleObject(
+                                             name = "ID de restaurante inválido",
+                                             value = "{\"message\": \"El ID del restaurante debe ser un número positivo\"}"
+                                     )
+                             )
+                     ),
+                     @ApiResponse(
+                             responseCode = "404",
+                             description = "Restaurante no encontrado",
+                             content = @Content(
+                                     mediaType = "application/json",
+                                     examples = @ExampleObject(
+                                             name = "Restaurante no encontrado",
+                                             value = "{\"message\": \"Restaurante no encontrado con ID: 999\"}"
+                                     )
+                             )
+                     )
+             })
+             @GetMapping("/restaurante/{idRestaurante}")
+             public ResponseEntity<Page<PlatoListaResponseDto>> obtenerPlatosPaginados(
+                     @PathVariable Long idRestaurante,
+                     @RequestParam(required = false) String categoria,
+                     @RequestParam(defaultValue = "0") int page,
+                     @RequestParam(defaultValue = "10") int size) {
+                 
+                 Page<PlatoListaResponseDto> platos = plazoletaHandler.obtenerPlatosPaginados(idRestaurante, categoria, page, size);
+                 return new ResponseEntity<>(platos, HttpStatus.OK);
+             }
+         }

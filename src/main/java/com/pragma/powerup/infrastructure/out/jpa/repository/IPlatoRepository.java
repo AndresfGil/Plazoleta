@@ -1,6 +1,8 @@
 package com.pragma.powerup.infrastructure.out.jpa.repository;
 
 import com.pragma.powerup.infrastructure.out.jpa.entity.PlatoEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +25,11 @@ public interface IPlatoRepository extends JpaRepository<PlatoEntity, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE PlatoEntity p SET p.activo = CASE WHEN p.activo = true THEN false ELSE true END WHERE p.id = :id")
     int toggleActivo(@Param("id") Long id);
+    
+    @Query("SELECT p FROM PlatoEntity p WHERE " +
+           "(:idRestaurante IS NULL OR p.idRestaurante = :idRestaurante) AND " +
+           "(:categoria IS NULL OR p.categoria = :categoria)")
+    Page<PlatoEntity> findByFiltros(@Param("idRestaurante") Long idRestaurante, 
+                                   @Param("categoria") String categoria, 
+                                   Pageable pageable);
 }

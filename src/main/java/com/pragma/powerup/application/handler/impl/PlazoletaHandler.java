@@ -4,17 +4,12 @@ package com.pragma.powerup.application.handler.impl;
 import com.pragma.powerup.application.dto.request.PlatoRequestDto;
 import com.pragma.powerup.application.dto.request.PlatoUpdateRequestDto;
 import com.pragma.powerup.application.dto.request.RestauranteRequestDto;
-import com.pragma.powerup.application.dto.response.ListaRestaurantesDto;
+import com.pragma.powerup.application.dto.response.PlatoListaResponseDto;
 import com.pragma.powerup.application.dto.response.PlatoResponseDto;
 import com.pragma.powerup.application.dto.response.RestauranteResponseDto;
 import com.pragma.powerup.application.handler.IPlazoletaHandler;
 import com.pragma.powerup.application.dto.response.RestauranteListaResponseDto;
-import com.pragma.powerup.application.mapper.IPlatoRequestMapper;
-import com.pragma.powerup.application.mapper.IPlatoResponseMapper;
-import com.pragma.powerup.application.mapper.IPlatoUpdateRequestMapper;
-import com.pragma.powerup.application.mapper.IRestauranteListaResponseMapper;
-import com.pragma.powerup.application.mapper.IRestauranteRequestMapper;
-import com.pragma.powerup.application.mapper.IRestauranteResponseMapper;
+import com.pragma.powerup.application.mapper.*;
 import com.pragma.powerup.domain.api.IPlatoServicePort;
 import com.pragma.powerup.domain.api.IRestauranteServicePort;
 import com.pragma.powerup.domain.model.Plato;
@@ -25,7 +20,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 
 
 @Service
@@ -42,6 +36,7 @@ public class PlazoletaHandler implements IPlazoletaHandler {
     private final IPlatoRequestMapper  platoRequestMapper;
     private final IPlatoResponseMapper platoResponseMapper;
     private final IPlatoUpdateRequestMapper platoUpdateRequestMapper;
+    private final IPlatoListaResponseMapper platoListaResponseMapper;
 
 
     @Override
@@ -80,6 +75,10 @@ public class PlazoletaHandler implements IPlazoletaHandler {
         return restaurantesPage.map(restauranteListaResponseMapper::toListaResponse);
     }
 
-
+    @Override
+    public Page<PlatoListaResponseDto> obtenerPlatosPaginados(Long idRestaurante, String categoria, int page, int size) {
+        Page<Plato> platosPage = platoServicePort.obtenerPlatosPaginados(idRestaurante, categoria, page, size);
+        return platosPage.map(platoListaResponseMapper::toListaResponse);
+    }
 
 }

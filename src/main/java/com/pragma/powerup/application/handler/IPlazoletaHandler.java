@@ -3,6 +3,7 @@ package com.pragma.powerup.application.handler;
 import com.pragma.powerup.application.dto.request.PlatoRequestDto;
 import com.pragma.powerup.application.dto.request.PlatoUpdateRequestDto;
 import com.pragma.powerup.application.dto.request.RestauranteRequestDto;
+import com.pragma.powerup.application.dto.response.PlatoListaResponseDto;
 import com.pragma.powerup.application.dto.response.RestauranteListaResponseDto;
 import org.springframework.data.domain.Page;
 import com.pragma.powerup.application.dto.response.PlatoResponseDto;
@@ -20,4 +21,6 @@ public interface IPlazoletaHandler {
     PlatoResponseDto togglePlatoActivo(Long id);
 
     Page<RestauranteListaResponseDto> obtenerRestaurantesPaginados(int page, int size);
+
+    Page<PlatoListaResponseDto> obtenerPlatosPaginados(Long idRestaurante, String categoria, int page, int size);
 }

@@ -3,9 +3,12 @@ package com.pragma.powerup.infrastructure.out.jpa.adapter;
 import com.pragma.powerup.domain.model.Plato;
 import com.pragma.powerup.domain.spi.IPlatoPersistencePort;
 import com.pragma.powerup.infrastructure.out.jpa.entity.PlatoEntity;
+import com.pragma.powerup.infrastructure.out.jpa.entity.RestauranteEntity;
 import com.pragma.powerup.infrastructure.out.jpa.mapper.IPlatoEntityMapper;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IPlatoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -60,5 +63,11 @@ public class PlatoJpaAdapter implements IPlatoPersistencePort {
         }
         
         return obtenerPlatoPorId(id);
+    }
+
+    @Override
+    public Page<Plato> obtenerPlatosPaginados(Long idRestaurante, String categoria, Pageable pageable) {
+        Page<PlatoEntity> platosPage = platoRepository.findByFiltros(idRestaurante, categoria, pageable);
+        return platosPage.map(platoEntityMapper::toPlato);
     }
 }
