@@ -16,4 +16,6 @@ public interface IPlatoPersistencePort {
 
     Page<Plato> obtenerPlatosPaginados(Long idRestaurante, String categoria, Pageable pageable);
 
+    Long obtenerIdRestauranteDelPlato(Long idPlato);
+
 }
