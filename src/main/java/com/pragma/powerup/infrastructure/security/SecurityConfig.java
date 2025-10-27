@@ -47,6 +47,9 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.POST, "/api/v1/plato").hasAuthority("PROPIETARIO")
                 .antMatchers(HttpMethod.PATCH, "/api/v1/plato/**").hasAuthority("PROPIETARIO")
                 .antMatchers(HttpMethod.PATCH, "/api/v1/pedido").hasAuthority("CLIENTE")
+                .antMatchers(HttpMethod.PATCH, "/api/v1/pedido/restaurante/**").hasAuthority("EMPLEADO")
+
+
 
                 .anyRequest().authenticated()
             .and()

@@ -7,6 +7,10 @@ import com.pragma.powerup.domain.model.Pedido;
 import com.pragma.powerup.domain.spi.IPedidoPersistencePort;
 import com.pragma.powerup.domain.spi.IPlatoPersistencePort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,8 +30,6 @@ public class PedidoUseCase implements IPedidoServicePort {
         if (tienePedidosEnProceso(pedido.getIdCliente())) {
             throw new DomainException("El cliente ya tiene un pedido en proceso");
         }
-
-        // Validar que todos los platos existan y pertenezcan al restaurante
         validarPlatosDelPedido(pedido);
 
         pedido.setEstado("PENDIENTE");
@@ -42,6 +44,12 @@ public class PedidoUseCase implements IPedidoServicePort {
     @Override
     public boolean tienePedidosEnProceso(Long idCliente) {
         return pedidoPersistencePort.tienePedidosEnProceso(idCliente);
+    }
+
+    @Override
+    public Page<Pedido> obtenerPedidosPaginados(Long idRstaurante, String estado, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("estado").descending());
+        return pedidoPersistencePort.obtenerPedidosPaginadosPorId(idRstaurante, estado, pageable);
     }
 
     private void validarPlatosDelPedido(Pedido pedido) {

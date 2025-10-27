@@ -13,6 +13,5 @@ import java.util.List;
 public interface IPlatoListaResponseMapper {
 
     PlatoListaResponseDto toListaResponse(Plato plato);
-    
-    List<PlatoListaResponseDto> toListaResponse(List<Plato> platos);
+
 }

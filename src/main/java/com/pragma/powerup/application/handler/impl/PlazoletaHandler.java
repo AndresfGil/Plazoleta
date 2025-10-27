@@ -38,7 +38,7 @@ public class PlazoletaHandler implements IPlazoletaHandler {
     private final IRestauranteResponseMapper restauranteResponseMapper;
     private final IRestauranteListaResponseMapper restauranteListaResponseMapper;
     private final IPlatoServicePort platoServicePort;
-    private final IPlatoRequestMapper  platoRequestMapper;
+    private final IPlatoRequestMapper platoRequestMapper;
     private final IPlatoResponseMapper platoResponseMapper;
     private final IPlatoUpdateRequestMapper platoUpdateRequestMapper;
     private final IPlatoListaResponseMapper platoListaResponseMapper;
@@ -66,9 +66,9 @@ public class PlazoletaHandler implements IPlazoletaHandler {
     public PlatoResponseDto actualizarPlato(Long id, PlatoUpdateRequestDto platoUpdateRequestDto) {
         Plato platoUpdate = platoUpdateRequestMapper.toPlato(platoUpdateRequestDto);
         platoUpdate.setId(id);
-        
+
         Plato platoActualizado = platoServicePort.actualizarPlato(platoUpdate);
-        
+
         return platoResponseMapper.toResponsePlato(platoActualizado);
     }
 
@@ -93,12 +93,17 @@ public class PlazoletaHandler implements IPlazoletaHandler {
     @Override
     public PedidoResponseDto crearPedido(PedidoRequestDto pedidoRequestDto) {
         Long idCliente = authenticationService.obtenerIdUsuarioAutenticado();
-        
+
         Pedido pedido = pedidoRequestMapper.toPedido(pedidoRequestDto);
         pedido.setIdCliente(idCliente);
-        
+
         Pedido pedidoGuardado = pedidoServicePort.guardarPedido(pedido);
         return pedidoResponseMapper.toResponsePedido(pedidoGuardado);
+    }
+
+    public Page<PedidoResponseDto> obtenerPedidosPaginados(Long idRestaurante, String estado, int page, int size) {
+        Page<Pedido> pedidosPage = pedidoServicePort.obtenerPedidosPaginados(idRestaurante, estado, page, size);
+        return pedidosPage.map(pedidoResponseMapper::toResponsePedido);
     }
 
 }
