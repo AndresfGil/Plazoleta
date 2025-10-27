@@ -30,4 +30,5 @@ public interface IPedidoRequestMapper {
     DetallePedido toDetallePedido(PedidoRequestDto.PlatoPedidoDto platoPedidoDto);
 
     List<DetallePedido> toDetallesPedido(List<PedidoRequestDto.PlatoPedidoDto> platos);
+
 }

@@ -41,7 +41,6 @@ public class RestauranteUseCase implements IRestauranteServicePort {
 
     private void validarPropietario(Long idPropietario) {
         try {
-            System.out.println("DEBUG: Validando propietario con ID: " + idPropietario);
             UsuarioResponseDto usuario = usuarioServicePort.obtenerUsuarioPorId(idPropietario);
             
             if (usuario.getActivo().equals(false)) {
