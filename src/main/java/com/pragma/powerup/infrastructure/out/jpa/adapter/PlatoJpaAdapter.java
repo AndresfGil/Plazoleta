@@ -70,4 +70,10 @@ public class PlatoJpaAdapter implements IPlatoPersistencePort {
         Page<PlatoEntity> platosPage = platoRepository.findByFiltros(idRestaurante, categoria, pageable);
         return platosPage.map(platoEntityMapper::toPlato);
     }
+
+    @Override
+    public Long obtenerIdRestauranteDelPlato(Long idPlato) {
+        return platoRepository.findIdRestauranteById(idPlato)
+                .orElseThrow(() -> new RuntimeException("Plato no encontrado con ID: " + idPlato));
+    }
 }

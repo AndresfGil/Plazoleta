@@ -32,4 +32,7 @@ public interface IPlatoRepository extends JpaRepository<PlatoEntity, Long> {
     Page<PlatoEntity> findByFiltros(@Param("idRestaurante") Long idRestaurante, 
                                    @Param("categoria") String categoria, 
                                    Pageable pageable);
+
+    @Query("SELECT p.idRestaurante FROM PlatoEntity p WHERE p.id = :idPlato")
+    Optional<Long> findIdRestauranteById(@Param("idPlato") Long idPlato);
 }

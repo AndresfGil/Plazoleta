@@ -1,17 +1,22 @@
 package com.pragma.powerup.application.handler.impl;
 
 
+import com.pragma.powerup.application.dto.request.PedidoRequestDto;
 import com.pragma.powerup.application.dto.request.PlatoRequestDto;
 import com.pragma.powerup.application.dto.request.PlatoUpdateRequestDto;
 import com.pragma.powerup.application.dto.request.RestauranteRequestDto;
+import com.pragma.powerup.application.dto.response.PedidoResponseDto;
 import com.pragma.powerup.application.dto.response.PlatoListaResponseDto;
 import com.pragma.powerup.application.dto.response.PlatoResponseDto;
 import com.pragma.powerup.application.dto.response.RestauranteResponseDto;
 import com.pragma.powerup.application.handler.IPlazoletaHandler;
 import com.pragma.powerup.application.dto.response.RestauranteListaResponseDto;
 import com.pragma.powerup.application.mapper.*;
+import com.pragma.powerup.domain.api.IPedidoServicePort;
 import com.pragma.powerup.domain.api.IPlatoServicePort;
 import com.pragma.powerup.domain.api.IRestauranteServicePort;
+import com.pragma.powerup.infrastructure.security.AuthenticationService;
+import com.pragma.powerup.domain.model.Pedido;
 import com.pragma.powerup.domain.model.Plato;
 import com.pragma.powerup.domain.model.Restaurante;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +42,10 @@ public class PlazoletaHandler implements IPlazoletaHandler {
     private final IPlatoResponseMapper platoResponseMapper;
     private final IPlatoUpdateRequestMapper platoUpdateRequestMapper;
     private final IPlatoListaResponseMapper platoListaResponseMapper;
+    private final IPedidoServicePort pedidoServicePort;
+    private final IPedidoRequestMapper pedidoRequestMapper;
+    private final IPedidoResponseMapper pedidoResponseMapper;
+    private final AuthenticationService authenticationService;
 
 
     @Override
@@ -79,6 +88,17 @@ public class PlazoletaHandler implements IPlazoletaHandler {
     public Page<PlatoListaResponseDto> obtenerPlatosPaginados(Long idRestaurante, String categoria, int page, int size) {
         Page<Plato> platosPage = platoServicePort.obtenerPlatosPaginados(idRestaurante, categoria, page, size);
         return platosPage.map(platoListaResponseMapper::toListaResponse);
+    }
+
+    @Override
+    public PedidoResponseDto crearPedido(PedidoRequestDto pedidoRequestDto) {
+        Long idCliente = authenticationService.obtenerIdUsuarioAutenticado();
+        
+        Pedido pedido = pedidoRequestMapper.toPedido(pedidoRequestDto);
+        pedido.setIdCliente(idCliente);
+        
+        Pedido pedidoGuardado = pedidoServicePort.guardarPedido(pedido);
+        return pedidoResponseMapper.toResponsePedido(pedidoGuardado);
     }
 
 }

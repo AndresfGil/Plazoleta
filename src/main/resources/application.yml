@@ -10,7 +10,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/plazoleta
     username: root
-    password: andres98
+    password: root
 
   jpa:
     hibernate:
