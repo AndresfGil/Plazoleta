@@ -42,6 +42,7 @@ public class SecurityConfig {
                 
 
                 .antMatchers(HttpMethod.POST, "/api/v1/restaurante").hasAuthority("ADMINISTRADOR")
+                .antMatchers(HttpMethod.POST, "/api/v1/restaurante").hasAuthority("EMPLEADO")
                 .antMatchers(HttpMethod.GET, "/api/v1/restaurante/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/v1/plato/restaurante/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/v1/plato").hasAuthority("PROPIETARIO")
@@ -49,7 +50,8 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.PATCH, "/api/v1/pedido").hasAuthority("CLIENTE")
                 .antMatchers(HttpMethod.PATCH, "/api/v1/pedido/cancelar/**").hasAuthority("CLIENTE")
                 .antMatchers(HttpMethod.PATCH, "/api/v1/pedido/asignar/**").hasAuthority("EMPLEADO")
-                .antMatchers(HttpMethod.PATCH, "/api/v1/pedido/entregar/**").hasAuthority("EMPLEADO")
+                .antMatchers(HttpMethod.PATCH, "/api/v1/pedido/listo/**").hasAuthority("EMPLEADO")
+                .antMatchers(HttpMethod.PATCH, "/api/v1/pedido/entregar/**").hasAuthority("CLIENTE")
                 .antMatchers(HttpMethod.PATCH, "/api/v1/pedido/restaurante/**").hasAuthority("EMPLEADO")
 
 

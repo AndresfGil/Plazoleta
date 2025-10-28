@@ -1,11 +1,14 @@
 package com.pragma.powerup.domain.usecase;
 
+import com.pragma.powerup.application.dto.response.UsuarioResponseDto;
 import com.pragma.powerup.domain.api.IPedidoServicePort;
 import com.pragma.powerup.domain.exception.DomainException;
 import com.pragma.powerup.domain.model.DetallePedido;
 import com.pragma.powerup.domain.model.Pedido;
 import com.pragma.powerup.domain.spi.IPedidoPersistencePort;
 import com.pragma.powerup.domain.spi.IPlatoPersistencePort;
+import com.pragma.powerup.domain.spi.IUsuarioServicePort;
+import com.pragma.powerup.domain.spi.IMensajeriaServicePort;
 import com.pragma.powerup.infrastructure.security.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +28,8 @@ public class PedidoUseCase implements IPedidoServicePort {
     private final IPedidoPersistencePort pedidoPersistencePort;
     private final IPlatoPersistencePort platoPersistencePort;
     private final AuthenticationService  authenticationService;
+    private final IUsuarioServicePort usuarioServicePort;
+    private final IMensajeriaServicePort mensajeriaServicePort;
     private final Random random = new Random();
 
     @Override
@@ -41,11 +46,6 @@ public class PedidoUseCase implements IPedidoServicePort {
         pedido.setFechaActualizacion(LocalDateTime.now());
 
         return pedidoPersistencePort.guardarPedido(pedido);
-    }
-
-    @Override
-    public boolean tienePedidosEnProceso(Long idCliente) {
-        return pedidoPersistencePort.tienePedidosEnProceso(idCliente);
     }
 
     @Override
@@ -81,6 +81,30 @@ public class PedidoUseCase implements IPedidoServicePort {
         }
 
         return pedidoPersistencePort.marcarPedidoEntregado(id);
+    }
+
+    @Override
+    public Pedido marcarPedidoListo(Long id) {
+        Pedido pedidoExistente = pedidoPersistencePort.obtenerPedidoPorId(id);
+        
+
+        UsuarioResponseDto usuario = usuarioServicePort.obtenerUsuarioPorId(pedidoExistente.getIdCliente());
+        
+        pedidoExistente.setEstado("LISTO");
+        pedidoExistente.setFechaActualizacion(LocalDateTime.now());
+        
+        Pedido pedidoActualizado = pedidoPersistencePort.actualizarPedido(pedidoExistente);
+        
+        try {
+            String mensaje = String.format("Tu pedido #%d está listo. Tu PIN es %s.", 
+                pedidoActualizado.getId(), pedidoActualizado.getPinSeguridad());
+            
+            mensajeriaServicePort.enviarMensajeSMS(usuario.getCelular(), mensaje);
+        } catch (Exception e) {
+            System.err.println("Error al enviar mensaje SMS: " + e.getMessage());
+        }
+        
+        return pedidoActualizado;
     }
 
     @Override

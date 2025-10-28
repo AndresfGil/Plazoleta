@@ -23,6 +23,8 @@ public interface IPlazoletaHandler {
 
     PedidoResponseDto marcarPedidoEntregado(Long id, String pinSeguridad);
 
+    PedidoResponseDto marcarPedidoListo(Long id);
+
     PedidoResponseDto cancelarPedido(Long id);
 
     Page<RestauranteListaResponseDto> obtenerRestaurantesPaginados(int page, int size);

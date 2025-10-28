@@ -367,6 +367,83 @@ public interface PedidoControllerDocs {
     ResponseEntity<PedidoResponseDto> marcarPedidoEntregado(Long idPedido, PedidoEntregadoDto pedidoEntregadoDto);
 
     @Operation(
+            summary = "Marcar pedido como listo",
+            description = "Marca un pedido como listo para entrega y envía notificación SMS al cliente. " +
+                    "Solo se pueden marcar como listos los pedidos en estado EN_PREPARACION. " +
+                    "Se envía automáticamente un SMS al cliente con el PIN de seguridad. " +
+                    "Requiere autenticación JWT y rol de EMPLEADO.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Pedido marcado como listo exitosamente y SMS enviado",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PedidoResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "Pedido listo",
+                                    value = "{\n" +
+                                            "  \"id\": 1,\n" +
+                                            "  \"idCliente\": 123,\n" +
+                                            "  \"idRestaurante\": 5,\n" +
+                                            "  \"estado\": \"LISTO\",\n" +
+                                            "  \"pinSeguridad\": \"1234\",\n" +
+                                            "  \"idEmpleadoAsignado\": 10,\n" +
+                                            "  \"fechaCreacion\": \"2024-01-15T10:30:00\",\n" +
+                                            "  \"fechaActualizacion\": \"2024-01-15T11:30:00\",\n" +
+                                            "  \"detalles\": []\n" +
+                                            "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Pedido no válido para marcar como listo",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Pedido no está en preparación",
+                                            value = "{\"message\": \"Solo se pueden marcar como listos los pedidos en preparación\"}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Pedido no existe",
+                                            value = "{\"message\": \"El pedido no existe\"}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "No autorizado - Token JWT inválido o faltante",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Prohibido - Sin permisos de empleado",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Pedido no encontrado",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Error interno del servidor",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Error al enviar SMS",
+                                    value = "{\"message\": \"Error al enviar mensaje SMS: [descripción del error]\"}"
+                            )
+                    )
+            )
+    })
+    ResponseEntity<PedidoResponseDto> marcarPedidoListo(Long idPedido);
+
+    @Operation(
             summary = "Cancelar pedido",
             description = "Cancela un pedido que se encuentre en estado PENDIENTE. " +
                     "Solo se pueden cancelar pedidos que no hayan comenzado su preparación. " +

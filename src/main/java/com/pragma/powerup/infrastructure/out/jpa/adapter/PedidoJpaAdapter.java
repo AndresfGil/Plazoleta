@@ -77,6 +77,13 @@ public class PedidoJpaAdapter implements IPedidoPersistencePort {
     }
 
     @Override
+    public Pedido actualizarPedido(Pedido pedido) {
+        PedidoEntity pedidoEntity = pedidoEntityMapper.toEntity(pedido);
+        PedidoEntity pedidoActualizado = pedidoRepository.save(pedidoEntity);
+        return pedidoEntityMapper.toPedido(pedidoActualizado);
+    }
+
+    @Override
     public Page<Pedido> obtenerPedidosPaginadosPorId(Long idRestaurante, String estado, Pageable pageable) {
         Page<PedidoEntity> pedidoPage = pedidoRepository.findByFiltros(idRestaurante, estado, pageable);
         return pedidoPage.map(pedidoEntityMapper::toPedido);

@@ -53,6 +53,12 @@ public class PedidoRestController implements PedidoControllerDocs {
         return new ResponseEntity<>(pedidoResponse, HttpStatus.OK);
     }
 
+    @PatchMapping("/listo/{idPedido}")
+    public ResponseEntity<PedidoResponseDto> marcarPedidoListo(@PathVariable Long idPedido) {
+        PedidoResponseDto pedidoResponse = plazoletaHandler.marcarPedidoListo(idPedido);
+        return new ResponseEntity<>(pedidoResponse, HttpStatus.OK);
+    }
+
     @PatchMapping("/cancelar/{idPedido}")
     public ResponseEntity<PedidoResponseDto> cancelarPedido(@PathVariable Long idPedido) {
         PedidoResponseDto pedidoResponse = plazoletaHandler.cancelarPedido(idPedido);
