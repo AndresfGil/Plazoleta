@@ -6,6 +6,7 @@ import com.pragma.powerup.domain.model.DetallePedido;
 import com.pragma.powerup.domain.model.Pedido;
 import com.pragma.powerup.domain.spi.IPedidoPersistencePort;
 import com.pragma.powerup.domain.spi.IPlatoPersistencePort;
+import com.pragma.powerup.infrastructure.security.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,11 +24,12 @@ public class PedidoUseCase implements IPedidoServicePort {
 
     private final IPedidoPersistencePort pedidoPersistencePort;
     private final IPlatoPersistencePort platoPersistencePort;
+    private final AuthenticationService  authenticationService;
     private final Random random = new Random();
 
     @Override
     public Pedido guardarPedido(Pedido pedido) {
-        if (tienePedidosEnProceso(pedido.getIdCliente())) {
+        if (pedidoPersistencePort.tienePedidosEnProceso(pedido.getIdCliente())) {
             throw new DomainException("El cliente ya tiene un pedido en proceso");
         }
         validarPlatosDelPedido(pedido);
@@ -51,6 +53,24 @@ public class PedidoUseCase implements IPedidoServicePort {
         Pageable pageable = PageRequest.of(page, size, Sort.by("estado").descending());
         return pedidoPersistencePort.obtenerPedidosPaginadosPorId(idRstaurante, estado, pageable);
     }
+
+    @Override
+    public Pedido asignarPedidoAEmpleado(Long id) {
+        Pedido pedidoExistente = pedidoPersistencePort.obtenerPedidoPorId(id);
+        if (pedidoExistente == null) {
+            throw new DomainException("El pedido no existe");
+        }
+        Long idUsuarioAutenticado = authenticationService.obtenerIdUsuarioAutenticado();
+
+        pedidoExistente.setEstado("EN PREPARACION");
+        pedidoExistente.setIdEmpleadoAsignado(idUsuarioAutenticado);
+        pedidoExistente.setFechaActualizacion(LocalDateTime.now());
+
+        return pedidoPersistencePort.asignarPedidoAEmpleado(id, pedidoExistente.getIdEmpleadoAsignado(), pedidoExistente.getEstado(), pedidoExistente.getFechaActualizacion());
+    }
+
+
+
 
     private void validarPlatosDelPedido(Pedido pedido) {
         List<DetallePedido> detalles = pedido.getDetalles();

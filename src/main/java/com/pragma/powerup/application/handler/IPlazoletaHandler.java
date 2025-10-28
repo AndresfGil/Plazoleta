@@ -22,6 +22,8 @@ public interface IPlazoletaHandler {
     
     PlatoResponseDto togglePlatoActivo(Long id);
 
+    PedidoResponseDto asignarPedidoAEmpleado(Long id);
+
     Page<RestauranteListaResponseDto> obtenerRestaurantesPaginados(int page, int size);
 
     Page<PlatoListaResponseDto> obtenerPlatosPaginados(Long idRestaurante, String categoria, int page, int size);
