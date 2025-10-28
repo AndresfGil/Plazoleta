@@ -37,4 +37,10 @@ public class PedidoRestController implements PedidoControllerDocs {
         Page<PedidoResponseDto> pedidos = plazoletaHandler.obtenerPedidosPaginados(idRestaurante, estado, page, size);
         return new ResponseEntity<>(pedidos, HttpStatus.OK);
     }
+
+    @PatchMapping("/asignar/{idPedido}")
+    public ResponseEntity<PedidoResponseDto> asignarPedidoAEmpleado(@PathVariable Long idPedido) {
+        PedidoResponseDto pedidoResponse = plazoletaHandler.asignarPedidoAEmpleado(idPedido);
+        return new ResponseEntity<>(pedidoResponse, HttpStatus.OK);
+    }
 }

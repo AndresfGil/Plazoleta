@@ -212,4 +212,73 @@ public interface PedidoControllerDocs {
             )
     })
     ResponseEntity<Page<PedidoResponseDto>> obtenerPedidosPaginados(Long idRestaurante, String estado, int page, int size);
+
+    @Operation(
+            summary = "Asignar pedido a empleado",
+            description = "Asigna un pedido pendiente a un empleado del restaurante para su preparación. " +
+                    "El empleado debe pertenecer al mismo restaurante del pedido. " +
+                    "Requiere autenticación JWT y rol de EMPLEADO.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Pedido asignado exitosamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PedidoResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "Pedido asignado",
+                                    value = "{\n" +
+                                            "  \"id\": 1,\n" +
+                                            "  \"idCliente\": 123,\n" +
+                                            "  \"idRestaurante\": 5,\n" +
+                                            "  \"estado\": \"EN_PREPARACION\",\n" +
+                                            "  \"pinSeguridad\": \"1234\",\n" +
+                                            "  \"idEmpleadoAsignado\": 10,\n" +
+                                            "  \"fechaCreacion\": \"2024-01-15T10:30:00\",\n" +
+                                            "  \"fechaActualizacion\": \"2024-01-15T11:00:00\",\n" +
+                                            "  \"detalles\": []\n" +
+                                            "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Pedido no válido para asignación",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Pedido ya asignado",
+                                            value = "{\"message\": \"El pedido ya está asignado a un empleado\"}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Pedido no está pendiente",
+                                            value = "{\"message\": \"Solo se pueden asignar pedidos en estado PENDIENTE\"}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Empleado no pertenece al restaurante",
+                                            value = "{\"message\": \"El empleado no pertenece al restaurante del pedido\"}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "No autorizado - Token JWT inválido o faltante",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Prohibido - Sin permisos de empleado",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Pedido no encontrado",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
+    ResponseEntity<PedidoResponseDto> asignarPedidoAEmpleado(Long idPedido);
 }
