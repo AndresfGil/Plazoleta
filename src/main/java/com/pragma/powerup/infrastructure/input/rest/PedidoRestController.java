@@ -1,5 +1,6 @@
 package com.pragma.powerup.infrastructure.input.rest;
 
+import com.pragma.powerup.application.dto.request.PedidoEntregadoDto;
 import com.pragma.powerup.application.dto.request.PedidoRequestDto;
 import com.pragma.powerup.application.dto.response.PedidoResponseDto;
 import com.pragma.powerup.application.handler.IPlazoletaHandler;
@@ -41,6 +42,14 @@ public class PedidoRestController implements PedidoControllerDocs {
     @PatchMapping("/asignar/{idPedido}")
     public ResponseEntity<PedidoResponseDto> asignarPedidoAEmpleado(@PathVariable Long idPedido) {
         PedidoResponseDto pedidoResponse = plazoletaHandler.asignarPedidoAEmpleado(idPedido);
+        return new ResponseEntity<>(pedidoResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping("/entregar/{idPedido}")
+    public ResponseEntity<PedidoResponseDto> marcarPedidoEntregado(
+            @PathVariable Long idPedido,
+            @Valid @RequestBody PedidoEntregadoDto pedidoEntregadoDto) {
+        PedidoResponseDto pedidoResponse = plazoletaHandler.marcarPedidoEntregado(idPedido, pedidoEntregadoDto.getPinSeguridad());
         return new ResponseEntity<>(pedidoResponse, HttpStatus.OK);
     }
 }

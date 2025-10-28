@@ -1,9 +1,6 @@
 package com.pragma.powerup.application.handler;
 
-import com.pragma.powerup.application.dto.request.PedidoRequestDto;
-import com.pragma.powerup.application.dto.request.PlatoRequestDto;
-import com.pragma.powerup.application.dto.request.PlatoUpdateRequestDto;
-import com.pragma.powerup.application.dto.request.RestauranteRequestDto;
+import com.pragma.powerup.application.dto.request.*;
 import com.pragma.powerup.application.dto.response.PedidoResponseDto;
 import com.pragma.powerup.application.dto.response.PlatoListaResponseDto;
 import com.pragma.powerup.application.dto.response.RestauranteListaResponseDto;
@@ -23,6 +20,8 @@ public interface IPlazoletaHandler {
     PlatoResponseDto togglePlatoActivo(Long id);
 
     PedidoResponseDto asignarPedidoAEmpleado(Long id);
+
+    PedidoResponseDto marcarPedidoEntregado(Long id, String pinSeguridad);
 
     Page<RestauranteListaResponseDto> obtenerRestaurantesPaginados(int page, int size);
 

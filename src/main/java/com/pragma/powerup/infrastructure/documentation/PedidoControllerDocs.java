@@ -1,5 +1,6 @@
 package com.pragma.powerup.infrastructure.documentation;
 
+import com.pragma.powerup.application.dto.request.PedidoEntregadoDto;
 import com.pragma.powerup.application.dto.request.PedidoRequestDto;
 import com.pragma.powerup.application.dto.response.PedidoResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -281,4 +282,87 @@ public interface PedidoControllerDocs {
             )
     })
     ResponseEntity<PedidoResponseDto> asignarPedidoAEmpleado(Long idPedido);
+
+    @Operation(
+            summary = "Marcar pedido como entregado",
+            description = "Marca un pedido como entregado validando el PIN de seguridad. " +
+                    "Solo se pueden entregar pedidos en estado LISTO. " +
+                    "Requiere autenticación JWT y rol de CLIENTE.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Pedido marcado como entregado exitosamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PedidoResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "Pedido entregado",
+                                    value = "{\n" +
+                                            "  \"id\": 1,\n" +
+                                            "  \"idCliente\": 123,\n" +
+                                            "  \"idRestaurante\": 5,\n" +
+                                            "  \"estado\": \"ENTREGADO\",\n" +
+                                            "  \"pinSeguridad\": \"1234\",\n" +
+                                            "  \"idEmpleadoAsignado\": 10,\n" +
+                                            "  \"fechaCreacion\": \"2024-01-15T10:30:00\",\n" +
+                                            "  \"fechaActualizacion\": \"2024-01-15T12:00:00\",\n" +
+                                            "  \"detalles\": []\n" +
+                                            "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Pedido no válido para entrega",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Pedido no está listo",
+                                            value = "{\"message\": \"Solo se pueden entregar pedidos en estado LISTO\"}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Pin incorrecto",
+                                            value = "{\"message\": \"Pin de seguridad incorrecto\"}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "PIN faltante",
+                                            value = "{\"message\": \"El PIN de seguridad es obligatorio\"}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "No autorizado - Token JWT inválido o faltante",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Prohibido - Sin permisos de cliente",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Pedido no encontrado",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
+    @RequestBody(
+            description = "Datos del PIN de seguridad para entregar el pedido",
+            required = true,
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = PedidoEntregadoDto.class),
+                    examples = @ExampleObject(
+                            name = "Ejemplo de PIN",
+                            value = "{\n" +
+                                    "  \"pinSeguridad\": \"1234\"\n" +
+                                    "}"
+                    )
+            )
+    )
+    ResponseEntity<PedidoResponseDto> marcarPedidoEntregado(Long idPedido, PedidoEntregadoDto pedidoEntregadoDto);
 }
