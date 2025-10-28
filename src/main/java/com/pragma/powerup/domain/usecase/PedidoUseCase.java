@@ -44,6 +44,11 @@ public class PedidoUseCase implements IPedidoServicePort {
     }
 
     @Override
+    public boolean tienePedidosEnProceso(Long idCliente) {
+        return pedidoPersistencePort.tienePedidosEnProceso(idCliente);
+    }
+
+    @Override
     public Page<Pedido> obtenerPedidosPaginados(Long idRstaurante, String estado, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("estado").descending());
         return pedidoPersistencePort.obtenerPedidosPaginadosPorId(idRstaurante, estado, pageable);
@@ -76,6 +81,22 @@ public class PedidoUseCase implements IPedidoServicePort {
         }
 
         return pedidoPersistencePort.marcarPedidoEntregado(id);
+    }
+
+    @Override
+    public Pedido cancelarPedido(Long id) {
+        Pedido pedidoExistente = pedidoPersistencePort.obtenerPedidoPorId(id);
+        Long idClienteAutenticado = authenticationService.obtenerIdUsuarioAutenticado();
+
+        if (!pedidoExistente.getIdCliente().equals(idClienteAutenticado)) {
+            throw new DomainException("No tienes permisos para cancelar este pedido");
+        }
+
+        if (!pedidoExistente.getEstado().equals("PENDIENTE")) {
+            throw new DomainException("Lo sentimos, tu pedido ya está en preparación y no puede cancelarse");
+        }
+
+        return pedidoPersistencePort.cancelarPedido(id);
     }
 
     private void validarPlatosDelPedido(Pedido pedido) {

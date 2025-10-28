@@ -365,4 +365,69 @@ public interface PedidoControllerDocs {
             )
     )
     ResponseEntity<PedidoResponseDto> marcarPedidoEntregado(Long idPedido, PedidoEntregadoDto pedidoEntregadoDto);
+
+    @Operation(
+            summary = "Cancelar pedido",
+            description = "Cancela un pedido que se encuentre en estado PENDIENTE. " +
+                    "Solo se pueden cancelar pedidos que no hayan comenzado su preparación. " +
+                    "Requiere autenticación JWT y rol de CLIENTE.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Pedido cancelado exitosamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PedidoResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "Pedido cancelado",
+                                    value = "{\n" +
+                                            "  \"id\": 1,\n" +
+                                            "  \"idCliente\": 123,\n" +
+                                            "  \"idRestaurante\": 5,\n" +
+                                            "  \"estado\": \"CANCELADO\",\n" +
+                                            "  \"pinSeguridad\": \"1234\",\n" +
+                                            "  \"idEmpleadoAsignado\": null,\n" +
+                                            "  \"fechaCreacion\": \"2024-01-15T10:30:00\",\n" +
+                                            "  \"fechaActualizacion\": \"2024-01-15T11:15:00\",\n" +
+                                            "  \"detalles\": []\n" +
+                                            "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Pedido no puede ser cancelado",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Pedido en preparación",
+                                            value = "{\"message\": \"Lo sentimos, tu pedido ya está en preparación y no puede cancelarse\"}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Sin permisos",
+                                            value = "{\"message\": \"No tienes permisos para cancelar este pedido\"}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "No autorizado - Token JWT inválido o faltante",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Prohibido - Sin permisos de cliente",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Pedido no encontrado",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
+    ResponseEntity<PedidoResponseDto> cancelarPedido(Long idPedido);
 }

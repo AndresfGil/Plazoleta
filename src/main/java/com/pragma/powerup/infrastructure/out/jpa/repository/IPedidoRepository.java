@@ -26,6 +26,10 @@ public interface IPedidoRepository extends JpaRepository<PedidoEntity, Long> {
     @Query("UPDATE PedidoEntity p SET p.estado = 'ENTREGADO', p.fechaActualizacion = :fechaActualizacion WHERE p.id = :id")
     int marcarPedidoEntregado(@Param("id") Long id, @Param("fechaActualizacion") LocalDateTime fechaActualizacion);
 
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE PedidoEntity p SET p.estado = 'CANCELADO', p.fechaActualizacion = :fechaActualizacion WHERE p.id = :id")
+    int cancelarPedido(@Param("id") Long id, @Param("fechaActualizacion") LocalDateTime fechaActualizacion);
+
     @Query("SELECT p FROM PedidoEntity p WHERE " +
             "(:idRestaurante IS NULL OR p.idRestaurante = :idRestaurante) AND " +
             "(:estado IS NULL OR p.estado = :estado)")

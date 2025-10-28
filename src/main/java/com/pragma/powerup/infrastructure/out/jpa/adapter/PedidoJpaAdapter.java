@@ -65,6 +65,16 @@ public class PedidoJpaAdapter implements IPedidoPersistencePort {
         return obtenerPedidoPorId(id);
     }
 
+    @Override
+    public Pedido cancelarPedido(Long id) {
+        int filasActualizadas = pedidoRepository.cancelarPedido(id, LocalDateTime.now());
+        
+        if (filasActualizadas == 0) {
+            throw new RuntimeException("No se pudo cancelar el pedido con ID: " + id);
+        }
+        
+        return obtenerPedidoPorId(id);
+    }
 
     @Override
     public Page<Pedido> obtenerPedidosPaginadosPorId(Long idRestaurante, String estado, Pageable pageable) {

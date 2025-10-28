@@ -17,7 +17,9 @@ public interface IPedidoPersistencePort {
 
     Pedido asignarPedidoAEmpleado(Long id, Long idEmpleado, String estado, LocalDateTime fechaActualizacion);
 
-    Pedido marcarPedidoEntregado (Long id);
+    Pedido marcarPedidoEntregado(Long id);
+
+    Pedido cancelarPedido(Long id);
 
     Page<Pedido> obtenerPedidosPaginadosPorId(Long idRestaurante, String estado, Pageable pageable);
 }

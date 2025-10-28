@@ -52,4 +52,10 @@ public class PedidoRestController implements PedidoControllerDocs {
         PedidoResponseDto pedidoResponse = plazoletaHandler.marcarPedidoEntregado(idPedido, pedidoEntregadoDto.getPinSeguridad());
         return new ResponseEntity<>(pedidoResponse, HttpStatus.OK);
     }
+
+    @PatchMapping("/cancelar/{idPedido}")
+    public ResponseEntity<PedidoResponseDto> cancelarPedido(@PathVariable Long idPedido) {
+        PedidoResponseDto pedidoResponse = plazoletaHandler.cancelarPedido(idPedido);
+        return new ResponseEntity<>(pedidoResponse, HttpStatus.OK);
+    }
 }
