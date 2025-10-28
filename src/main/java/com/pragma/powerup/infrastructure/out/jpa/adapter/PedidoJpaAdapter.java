@@ -54,6 +54,17 @@ public class PedidoJpaAdapter implements IPedidoPersistencePort {
         return obtenerPedidoPorId(id);
     }
 
+    @Override
+    public Pedido marcarPedidoEntregado(Long id) {
+        int filasActualizadas = pedidoRepository.marcarPedidoEntregado(id, LocalDateTime.now());
+        
+        if (filasActualizadas == 0) {
+            throw new RuntimeException("No se pudo marcar como entregado el pedido con ID: " + id);
+        }
+        
+        return obtenerPedidoPorId(id);
+    }
+
 
     @Override
     public Page<Pedido> obtenerPedidosPaginadosPorId(Long idRestaurante, String estado, Pageable pageable) {

@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 public interface IPedidoPersistencePort {
 
@@ -17,6 +16,8 @@ public interface IPedidoPersistencePort {
     Pedido obtenerPedidoPorId(Long idPedido);
 
     Pedido asignarPedidoAEmpleado(Long id, Long idEmpleado, String estado, LocalDateTime fechaActualizacion);
+
+    Pedido marcarPedidoEntregado (Long id);
 
     Page<Pedido> obtenerPedidosPaginadosPorId(Long idRestaurante, String estado, Pageable pageable);
 }

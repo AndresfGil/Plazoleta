@@ -85,6 +85,12 @@ public class PlazoletaHandler implements IPlazoletaHandler {
     }
 
     @Override
+    public PedidoResponseDto marcarPedidoEntregado(Long id, String pinSeguridad) {
+        Pedido pedidoMarcado = pedidoServicePort.marcarPedidoEntregado(id, pinSeguridad);
+        return pedidoResponseMapper.toResponsePedido(pedidoMarcado);
+    }
+
+    @Override
     public Page<RestauranteListaResponseDto> obtenerRestaurantesPaginados(int page, int size) {
         Page<Restaurante> restaurantesPage = restauranteServicePort.obtenerRestaurantesPaginados(page, size);
         return restaurantesPage.map(restauranteListaResponseMapper::toListaResponse);
@@ -107,7 +113,6 @@ public class PlazoletaHandler implements IPlazoletaHandler {
         return pedidoResponseMapper.toResponsePedido(pedidoGuardado);
     }
 
-    @Override
     public Page<PedidoResponseDto> obtenerPedidosPaginados(Long idRestaurante, String estado, int page, int size) {
         Page<Pedido> pedidosPage = pedidoServicePort.obtenerPedidosPaginados(idRestaurante, estado, page, size);
         return pedidosPage.map(pedidoResponseMapper::toResponsePedido);

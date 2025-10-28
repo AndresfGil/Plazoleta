@@ -5,10 +5,10 @@ import org.springframework.data.domain.Page;
 
 public interface IPedidoServicePort {
     Pedido guardarPedido(Pedido pedido);
-    
-    boolean tienePedidosEnProceso(Long idCliente);
-    
+
     Page<Pedido> obtenerPedidosPaginados(Long idRstaurante, String estado, int page, int size);
 
     Pedido asignarPedidoAEmpleado(Long id);
+
+    Pedido marcarPedidoEntregado(Long id, String pinSeguridad);
 }

@@ -44,11 +44,6 @@ public class PedidoUseCase implements IPedidoServicePort {
     }
 
     @Override
-    public boolean tienePedidosEnProceso(Long idCliente) {
-        return pedidoPersistencePort.tienePedidosEnProceso(idCliente);
-    }
-
-    @Override
     public Page<Pedido> obtenerPedidosPaginados(Long idRstaurante, String estado, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("estado").descending());
         return pedidoPersistencePort.obtenerPedidosPaginadosPorId(idRstaurante, estado, pageable);
@@ -64,13 +59,24 @@ public class PedidoUseCase implements IPedidoServicePort {
 
         pedidoExistente.setEstado("EN PREPARACION");
         pedidoExistente.setIdEmpleadoAsignado(idUsuarioAutenticado);
-        pedidoExistente.setFechaActualizacion(LocalDateTime.now());
+        pedidoExistente.setFechaCreacion(LocalDateTime.now());
 
-        return pedidoPersistencePort.asignarPedidoAEmpleado(id, pedidoExistente.getIdEmpleadoAsignado(), pedidoExistente.getEstado(), pedidoExistente.getFechaActualizacion());
+        return pedidoPersistencePort.asignarPedidoAEmpleado(id, pedidoExistente.getIdEmpleadoAsignado(), pedidoExistente.getEstado(), pedidoExistente.getFechaCreacion());
     }
 
+    @Override
+    public Pedido marcarPedidoEntregado(Long id, String pinSeguridad) {
+        Pedido pedidoExistente = pedidoPersistencePort.obtenerPedidoPorId(id);
 
+        if (!pedidoExistente.getEstado().equals("LISTO")) {
+            throw new DomainException("Solo se pueden entregar pedidos en estado LISTO");
+        }
+        if (!pedidoExistente.getPinSeguridad().equals(pinSeguridad)) {
+            throw new DomainException("Pin de seguridad incorrecto");
+        }
 
+        return pedidoPersistencePort.marcarPedidoEntregado(id);
+    }
 
     private void validarPlatosDelPedido(Pedido pedido) {
         List<DetallePedido> detalles = pedido.getDetalles();
