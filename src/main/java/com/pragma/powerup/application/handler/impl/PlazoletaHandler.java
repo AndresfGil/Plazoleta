@@ -91,6 +91,12 @@ public class PlazoletaHandler implements IPlazoletaHandler {
     }
 
     @Override
+    public PedidoResponseDto cancelarPedido(Long id) {
+        Pedido pedidoCancelado = pedidoServicePort.cancelarPedido(id);
+        return pedidoResponseMapper.toResponsePedido(pedidoCancelado);
+    }
+
+    @Override
     public Page<RestauranteListaResponseDto> obtenerRestaurantesPaginados(int page, int size) {
         Page<Restaurante> restaurantesPage = restauranteServicePort.obtenerRestaurantesPaginados(page, size);
         return restaurantesPage.map(restauranteListaResponseMapper::toListaResponse);

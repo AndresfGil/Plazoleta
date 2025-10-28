@@ -10,5 +10,9 @@ public interface IPedidoServicePort {
 
     Pedido asignarPedidoAEmpleado(Long id);
 
+    boolean tienePedidosEnProceso(Long idCliente);
+
     Pedido marcarPedidoEntregado(Long id, String pinSeguridad);
+
+    Pedido cancelarPedido(Long id);
 }
