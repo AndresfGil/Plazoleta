@@ -25,3 +25,7 @@ microservices:
     url: http://localhost:8080
   mensajeria:
     url: http://localhost:8082
+
+trazabilidad:
+  service:
+    url: http://localhost:8083

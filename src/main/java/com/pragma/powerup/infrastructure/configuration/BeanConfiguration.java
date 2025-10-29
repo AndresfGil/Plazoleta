@@ -6,10 +6,12 @@ import com.pragma.powerup.domain.spi.IRestaurantePersistencePort;
 import com.pragma.powerup.domain.spi.IPlatoPersistencePort;
 import com.pragma.powerup.domain.spi.IUsuarioServicePort;
 import com.pragma.powerup.domain.spi.IMensajeriaServicePort;
+import com.pragma.powerup.domain.spi.ITrazabilidadServicePort;
 import com.pragma.powerup.domain.usecase.RestauranteUseCase;
 import com.pragma.powerup.domain.usecase.PlatoUseCase;
 import com.pragma.powerup.infrastructure.out.http.adapter.UsuarioHttpAdapter;
 import com.pragma.powerup.infrastructure.out.http.adapter.MensajeriaHttpAdapter;
+import com.pragma.powerup.infrastructure.out.http.adapter.TrazabilidadHttpAdapter;
 import com.pragma.powerup.infrastructure.out.jpa.adapter.RestauranteJpaAdapter;
 import com.pragma.powerup.infrastructure.out.jpa.adapter.PlatoJpaAdapter;
 import com.pragma.powerup.infrastructure.out.jpa.mapper.IRestauranteEntityMapper;
@@ -54,6 +56,11 @@ public class BeanConfiguration {
     @Bean
     public IMensajeriaServicePort mensajeriaServicePort() {
         return new MensajeriaHttpAdapter(restTemplate());
+    }
+
+    @Bean
+    public ITrazabilidadServicePort trazabilidadServicePort() {
+        return new TrazabilidadHttpAdapter(restTemplate());
     }
 
     @Bean

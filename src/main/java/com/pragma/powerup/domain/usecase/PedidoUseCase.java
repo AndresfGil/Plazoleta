@@ -9,6 +9,7 @@ import com.pragma.powerup.domain.spi.IPedidoPersistencePort;
 import com.pragma.powerup.domain.spi.IPlatoPersistencePort;
 import com.pragma.powerup.domain.spi.IUsuarioServicePort;
 import com.pragma.powerup.domain.spi.IMensajeriaServicePort;
+import com.pragma.powerup.domain.spi.ITrazabilidadServicePort;
 import com.pragma.powerup.infrastructure.security.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ public class PedidoUseCase implements IPedidoServicePort {
     private final AuthenticationService  authenticationService;
     private final IUsuarioServicePort usuarioServicePort;
     private final IMensajeriaServicePort mensajeriaServicePort;
+    private final ITrazabilidadServicePort trazabilidadServicePort;
     private final Random random = new Random();
 
     @Override
@@ -45,7 +47,17 @@ public class PedidoUseCase implements IPedidoServicePort {
         pedido.setFechaCreacion(LocalDateTime.now());
         pedido.setFechaActualizacion(LocalDateTime.now());
 
-        return pedidoPersistencePort.guardarPedido(pedido);
+        Pedido pedidoGuardado = pedidoPersistencePort.guardarPedido(pedido);
+        
+        // Enviar trazabilidad
+        trazabilidadServicePort.enviarEventoCambioEstado(
+            pedidoGuardado.getId(),
+            pedidoGuardado.getIdCliente(),
+            null,
+            "PENDIENTE"
+        );
+        
+        return pedidoGuardado;
     }
 
     @Override
@@ -62,11 +74,55 @@ public class PedidoUseCase implements IPedidoServicePort {
         }
         Long idUsuarioAutenticado = authenticationService.obtenerIdUsuarioAutenticado();
 
+        String estadoAnterior = pedidoExistente.getEstado();
         pedidoExistente.setEstado("EN PREPARACION");
         pedidoExistente.setIdEmpleadoAsignado(idUsuarioAutenticado);
         pedidoExistente.setFechaCreacion(LocalDateTime.now());
 
-        return pedidoPersistencePort.asignarPedidoAEmpleado(id, pedidoExistente.getIdEmpleadoAsignado(), pedidoExistente.getEstado(), pedidoExistente.getFechaCreacion());
+        Pedido pedidoActualizado = pedidoPersistencePort.asignarPedidoAEmpleado(id, pedidoExistente.getIdEmpleadoAsignado(), pedidoExistente.getEstado(), pedidoExistente.getFechaCreacion());
+        
+        // Enviar trazabilidad
+        trazabilidadServicePort.enviarEventoCambioEstado(
+            pedidoActualizado.getId(),
+            pedidoActualizado.getIdCliente(),
+            estadoAnterior,
+            "EN PREPARACION"
+        );
+        
+        return pedidoActualizado;
+    }
+
+    @Override
+    public Pedido marcarPedidoListo(Long id) {
+        Pedido pedidoExistente = pedidoPersistencePort.obtenerPedidoPorId(id);
+        
+
+        UsuarioResponseDto usuario = usuarioServicePort.obtenerUsuarioPorId(pedidoExistente.getIdCliente());
+        
+        String estadoAnterior = pedidoExistente.getEstado();
+        pedidoExistente.setEstado("LISTO");
+        pedidoExistente.setFechaActualizacion(LocalDateTime.now());
+        
+        Pedido pedidoActualizado = pedidoPersistencePort.actualizarPedido(pedidoExistente);
+        
+        // Enviar trazabilidad
+        trazabilidadServicePort.enviarEventoCambioEstado(
+            pedidoActualizado.getId(),
+            pedidoActualizado.getIdCliente(),
+            estadoAnterior,
+            "LISTO"
+        );
+        
+        try {
+            String mensaje = String.format("Tu pedido #%d está listo. Tu PIN es %s.", 
+                pedidoActualizado.getId(), pedidoActualizado.getPinSeguridad());
+            
+            mensajeriaServicePort.enviarMensajeSMS(usuario.getCelular(), mensaje);
+        } catch (Exception e) {
+            System.err.println("Error al enviar mensaje SMS: " + e.getMessage());
+        }
+        
+        return pedidoActualizado;
     }
 
     @Override
@@ -80,31 +136,18 @@ public class PedidoUseCase implements IPedidoServicePort {
             throw new DomainException("Pin de seguridad incorrecto");
         }
 
-        return pedidoPersistencePort.marcarPedidoEntregado(id);
-    }
+        String estadoAnterior = pedidoExistente.getEstado();
+        Pedido pedidoEntregado = pedidoPersistencePort.marcarPedidoEntregado(id);
 
-    @Override
-    public Pedido marcarPedidoListo(Long id) {
-        Pedido pedidoExistente = pedidoPersistencePort.obtenerPedidoPorId(id);
-        
+        // Enviar trazabilidad
+        trazabilidadServicePort.enviarEventoCambioEstado(
+                pedidoEntregado.getId(),
+                pedidoEntregado.getIdCliente(),
+                estadoAnterior,
+                "ENTREGADO"
+        );
 
-        UsuarioResponseDto usuario = usuarioServicePort.obtenerUsuarioPorId(pedidoExistente.getIdCliente());
-        
-        pedidoExistente.setEstado("LISTO");
-        pedidoExistente.setFechaActualizacion(LocalDateTime.now());
-        
-        Pedido pedidoActualizado = pedidoPersistencePort.actualizarPedido(pedidoExistente);
-        
-        try {
-            String mensaje = String.format("Tu pedido #%d está listo. Tu PIN es %s.", 
-                pedidoActualizado.getId(), pedidoActualizado.getPinSeguridad());
-            
-            mensajeriaServicePort.enviarMensajeSMS(usuario.getCelular(), mensaje);
-        } catch (Exception e) {
-            System.err.println("Error al enviar mensaje SMS: " + e.getMessage());
-        }
-        
-        return pedidoActualizado;
+        return pedidoEntregado;
     }
 
     @Override
@@ -120,7 +163,18 @@ public class PedidoUseCase implements IPedidoServicePort {
             throw new DomainException("Lo sentimos, tu pedido ya está en preparación y no puede cancelarse");
         }
 
-        return pedidoPersistencePort.cancelarPedido(id);
+        String estadoAnterior = pedidoExistente.getEstado();
+        Pedido pedidoCancelado = pedidoPersistencePort.cancelarPedido(id);
+        
+        // Enviar trazabilidad
+        trazabilidadServicePort.enviarEventoCambioEstado(
+            pedidoCancelado.getId(),
+            pedidoCancelado.getIdCliente(),
+            estadoAnterior,
+            "CANCELADO"
+        );
+        
+        return pedidoCancelado;
     }
 
     private void validarPlatosDelPedido(Pedido pedido) {
