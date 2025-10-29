@@ -2,6 +2,7 @@ package com.pragma.powerup.infrastructure.out.http.adapter;
 
 import com.pragma.powerup.application.dto.response.UsuarioResponseDto;
 import com.pragma.powerup.domain.spi.IUsuarioServicePort;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -16,10 +17,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class UsuarioHttpAdapter implements IUsuarioServicePort {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Value("${microservices.usuarios.url}")
     private String usuariosServiceUrl;

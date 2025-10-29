@@ -21,5 +21,7 @@ public interface IPedidoPersistencePort {
 
     Pedido cancelarPedido(Long id);
 
+    Pedido actualizarPedido(Pedido pedido);
+
     Page<Pedido> obtenerPedidosPaginadosPorId(Long idRestaurante, String estado, Pageable pageable);
 }

@@ -91,6 +91,12 @@ public class PlazoletaHandler implements IPlazoletaHandler {
     }
 
     @Override
+    public PedidoResponseDto marcarPedidoListo(Long id) {
+        Pedido pedidoListo = pedidoServicePort.marcarPedidoListo(id);
+        return pedidoResponseMapper.toResponsePedido(pedidoListo);
+    }
+
+    @Override
     public PedidoResponseDto cancelarPedido(Long id) {
         Pedido pedidoCancelado = pedidoServicePort.cancelarPedido(id);
         return pedidoResponseMapper.toResponsePedido(pedidoCancelado);
